@@ -1,6 +1,6 @@
 from anytree import Node
 from anytree.exporter import UniqueDotExporter, DotExporter
-from random_forest import Leaf
+from decision_tree import Leaf
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -17,6 +17,7 @@ def visualize_tree(tree, attrs_names, output_name):
     Returns:
         None
     """
+    print(attrs_names[tree.attr_index])
     main_node = Node(attrs_names[tree.attr_index], node_type="node")
 
     def create_children(tree, parrent_node):
@@ -49,8 +50,6 @@ def visualize_tree(tree, attrs_names, output_name):
         else:
             return "shape=diamond"
     print(main_node.height)
-    #dot_filename = output_name.replace('.png', '.dot')
-    #UniqueDotExporter(main_node, edgeattrfunc=edgeattrfunc).to_dotfile(dot_filename)
 
     UniqueDotExporter(main_node, edgeattrfunc=edgeattrfunc).to_picture(output_name)
 

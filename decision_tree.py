@@ -6,60 +6,27 @@ import copy
 from sympy import total_degree
 
 
-class RandomForest():
+class DecisionTree():
     """
-    Random Forest classifier.
+    Decision Tree classifier.
 
     Parameters:
     - train_data (tuple): Tuple containing the training data, where the first element is a dictionary with attribute indices and values, and the second element is a list of class labels.
-    - number_of_trees (int): Number of decision trees to include in the random forest.
     - max_depth (int): Maximum depth of each decision tree.
-    - percent_of_drawn_attrs (float, optional): Percentage of attributes to be randomly drawn for each tree. Defaults to 60.
-    - n_attrs (int, optional): Number of attributes to be randomly drawn for each tree. Overrides percent_of_drawn_attrs if provided.
 
     Methods:
-    - calculate_acc(test_data): Calculates the accuracy of the random forest on the given test data.
+    - calculate_acc(test_data): Calculates the accuracy of the Decision Tree on the given test data.
     - calculate_confusion_matrix(test_data, checked_class): Calculates the confusion matrix for a specific class on the given test data.
     - calculate_metrics_of_confusion_matrix(confusion_matrix): Calculates various metrics (True Positive Rate, False Positive Rate, Precision, Accuracy, F1 Score) based on the given confusion matrix.
-    - predict_random_forest(input_data): Predicts the class label for the given input data using the random forest.
+    - predict_random_forest(input_data): Predicts the class label for the given input data using the Decision Tree.
     """
-    trees = []
+    tree = None
     train_data = None
 
-    def __init__(self, train_data, number_of_trees, max_depth, percent_of_drawn_attrs=60, n_attrs=None, method="entropy"):
+    def __init__(self, train_data, max_depth, method="entropy"):
         self.train_data = copy.deepcopy(train_data)
-        for _ in range(number_of_trees):
-            new_train_data = self.get_drawn_attrs_and_rows(percent_of_drawn_attrs, n_attrs=n_attrs)
-            tree = self.genenerate_tree(new_train_data, max_depth, method)
-            self.trees.append(tree)
-
-    def get_drawn_attrs_and_rows(self, percent_of_data, n_attrs=None):
-        """
-        Randomly selects a subset of attributes and rows from the training data.
-
-        Args:
-            percent_of_data (float): The percentage of data to be included in the subset.
-            n_attrs (int, optional): The number of attributes to be included in the subset. If not specified,
-                                     the square root of the total number of attributes will be used.
-
-        Returns:
-            tuple: A tuple containing a dictionary with the selected attribute indices and values,
-                   and a list with the corresponding class labels.
-        """
-        number_of_attrs = int(math.sqrt(len(self.train_data[0]["attrs_index"])))
-        if n_attrs:
-            number_of_attrs = n_attrs
-        size_of_new_train_data = int(len(self.train_data[0]["attrs_vals"]) * (percent_of_data/100))
-        new_train_data = ({"attrs_index": [], "attrs_vals": []}, [])
-        while len(new_train_data[0]["attrs_index"]) < number_of_attrs:
-            index = random.randrange(len(self.train_data[0]["attrs_index"]))
-            if index not in new_train_data[0]["attrs_index"]:
-                new_train_data[0]["attrs_index"].append(index)
-        while len(new_train_data[0]["attrs_vals"]) < size_of_new_train_data:
-            index = random.randrange(len(self.train_data[0]["attrs_vals"]))
-            new_train_data[0]["attrs_vals"].append(self.train_data[0]["attrs_vals"][index])
-            new_train_data[1].append(self.train_data[1][index])
-        return new_train_data
+        tree = self.genenerate_tree(train_data, max_depth, method)
+        self.tree = tree
 
     def calculate_entropy(self, class_vals, uniq_class_vals):
         """
@@ -101,19 +68,19 @@ class RandomForest():
 
     def calculate_acc(self, test_data):
         """
-        Calculate the accuracy of the random forest model on the given test data.
+        Calculate the accuracy of the Decision Tree model on the given test data.
 
         Parameters:
         - test_data (tuple): A tuple containing the test data, where the first element is a dictionary with the attribute values
                              and the second element is a list of corresponding labels.
 
         Returns:
-        - float: The accuracy of the random forest model on the test data, expressed as a value between 0 and 1.
+        - float: The accuracy of the Decision Tree model on the test data, expressed as a value between 0 and 1.
         """
         correct_predictions = 0
         wrong_predictions = 0
         for i, row in enumerate(test_data[0]["attrs_vals"]):
-            decision = self.predict_random_forest(row)
+            decision = self.predict_decision_tree(row)
             if decision == test_data[1][i]:
                 correct_predictions += 1
             else:
@@ -308,32 +275,17 @@ class RandomForest():
             return node.decision
         return None
 
-    def predict_random_forest(self, input_data):
+    def predict_decision_tree(self, input_data):
         """
-        Predicts the output for the given input data using the random forest model.
+        Predicts the output for the given input data using the Decision Tree model.
 
         Parameters:
         - input_data: The input data for which the output is to be predicted.
 
         Returns:
-        - The predicted output based on the random forest model.
+        - The predicted output based on the Decision Tree model.
         """
-        decisions = {}
-        for tree in self.trees:
-            decision = self.predict_tree_decision(tree, input_data)
-            if decisions is None:
-                continue
-            if decision not in decisions:
-                decisions[decision] = 1
-            else:
-                decisions[decision] += 1
-        the_best_decision = None
-        number_of_occurance = 0
-        for i in decisions:
-            if decisions[i] >= number_of_occurance:
-                the_best_decision = i
-                number_of_occurance = decisions[i]
-        return the_best_decision
+        return self.predict_tree_decision(self.tree, input_data)
 
 
 class Node:

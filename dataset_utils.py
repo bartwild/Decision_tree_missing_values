@@ -28,7 +28,7 @@ def replace_missing_with_mode(data, mode_values):
         new_data.append(new_row)
     return new_data
 
-def mask_random_attributes(attrs_vals, masking_rate=0.1):
+def mask_random_attributes(attrs_vals, masking_rate):
     """
     Randomly masks individual attribute values within the dataset.
     """
@@ -43,13 +43,14 @@ def split_random_to_train_and_test_data(attrs_vals, class_vals, percent_of_train
     Splits the given dataset into training and testing data randomly after applying random attribute masking.
     """
     attrs_vals = mask_random_attributes(attrs_vals, masking_rate)
-    attrs_vals = preprocess_data(attrs_vals)
+    
     #mode_values = calculate_mode(attrs_vals)
     #attrs_vals = replace_missing_with_mode(attrs_vals, mode_values)
 
     combined_data = list(zip(attrs_vals, class_vals))
     random.shuffle(combined_data)
-
+    #distributions = calculate_attribute_distribution([x for x,_ in combined_data])
+    #attrs_vals = replace_missing_with_distribution([x for x,_ in combined_data], distributions)
     split_index = int(len(combined_data) * (percent_of_train_data / 100))
     train_data = combined_data[:split_index]
     test_data = combined_data[split_index:]
@@ -84,21 +85,35 @@ def calculate_attribute_distribution(data, index):
     distribution = {val: count / total for val, count in value_counts.items()}
     return distribution
 
-def generate_fractional_instances(data, distributions):
-    """ Generuje ułamkowe instancje dla danych z brakującymi wartościami. """
+def calculate_attribute_distribution(data):
+    """
+    Calculates the distribution of values for each attribute in the dataset,
+    ignoring 'missing' entries.
+    """
+    columns = list(zip(*data))
+    distributions = []
+    for column in columns:
+        total = len([x for x in column if x != 'missing'])
+        count = Counter(x for x in column if x != 'missing')
+        distribution = {k: v / total for k, v in count.items()}
+        distributions.append(distribution)
+    return distributions
+
+def replace_missing_with_distribution(data, distributions):
+    """
+    Replace 'missing' entries in the dataset based on the distribution of
+    the corresponding attribute column.
+    """
     new_data = []
     for row in data:
-        fractional_rows = row.copy()
+        new_row = []
         for i, value in enumerate(row):
             if value == 'missing':
-                val = distributions[i].items()
-                value = val
-        new_data.extend(fractional_rows)
+                if distributions[i]:  # Check if there is a distribution to sample from
+                    new_row.append(random.choices(list(distributions[i].keys()), weights=distributions[i].values())[0])
+                else:
+                    new_row.append('missing')  # In case there are no known values to base the distribution on
+            else:
+                new_row.append(value)
+        new_data.append(new_row)
     return new_data
-
-
-def preprocess_data(attrs_vals):
-    """ Przygotowuje dane, obliczając rozkłady atrybutów i generując ułamkowe instancje. """
-    distributions = [calculate_attribute_distribution((attrs_vals), i) for i in range(len(attrs_vals[0]))]
-    attrs_vals = generate_fractional_instances(attrs_vals, distributions)
-    return attrs_vals

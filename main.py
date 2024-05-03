@@ -1,11 +1,11 @@
 from dataset_utils import get_data, split_random_to_train_and_test_data
-from random_forest import RandomForest
+from decision_tree import DecisionTree
 from visualization_utils import visualize_acc, visualize_metrics_of_confusion_matrix, visualize_class_counter, visualize_tree, visulate_acc_per_input_method
-from utils import ATTRS_NAMES, CLASS_VALUES, N_ATTRS, PERCENT_OF_DRAWN_ROWS, N_TREES, MAX_DEPTH, PERCENT_OF_TRAIN_DATA, ATTR_TO_INDEX
+from utils import ATTRS_NAMES, CLASS_VALUES, MAX_DEPTH, PERCENT_OF_TRAIN_DATA, ATTR_TO_INDEX
 import numpy as np
 import random
 
-row_attrs, class_vals = get_data("nursery.data")
+row_attrs, class_vals = get_data("car.data")
 """
 uniq_attr_vals = np.unique([i[ATTR_TO_INDEX.get("persons")] for i in row_attrs])
 class_val_counter_by_attr = {
@@ -85,9 +85,9 @@ for class_val in CLASS_VALUES:
 visualize_metrics_of_confusion_matrix(list_of_metrics, CLASS_VALUES)
 """
 ######
-# compare acc of sorted and shuffled data
+# compare acc of diff entropy calc
 ######
-
+"""
 list_of_percent_train_data = [0.1, 0.5, 1, 5, 10]
 labels_for_percent_of_train_data = []
 list_of_acc = []
@@ -105,4 +105,21 @@ for i in list_of_percent_train_data:
     print(acc)
 
 visulate_acc_per_input_method(list_of_acc, labels_for_percent_of_train_data)
-
+"""
+list_of_percent_train_data = [0.1, 0.5, 1, 5, 10, 20, 30, 40, 50, 60, 70, 80]
+labels_for_percent_of_train_data = []
+list_of_acc = []
+for i in list_of_percent_train_data:
+    print(i)
+    train_data, test_data = split_random_to_train_and_test_data(row_attrs, class_vals, i)
+    decision_tree = DecisionTree(train_data, MAX_DEPTH, method='entropy')
+    acc = decision_tree.calculate_acc(test_data)
+    list_of_acc.append(acc)
+    print(acc)
+    decision_tree = DecisionTree(train_data, MAX_DEPTH, method='gini')
+    acc = decision_tree.calculate_acc(test_data)
+    list_of_acc.append(acc)
+    labels_for_percent_of_train_data.append('%.2f%%' % (i))
+    print(acc)
+visualize_tree(tree=decision_tree.tree, attrs_names=ATTRS_NAMES,output_name="tree.png")
+visulate_acc_per_input_method(list_of_acc, labels_for_percent_of_train_data)
