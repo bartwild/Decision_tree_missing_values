@@ -22,9 +22,11 @@ class DecisionTree():
     """
     tree = None
     train_data = None
+    weights = None
 
-    def __init__(self, train_data, max_depth, method="entropy"):
+    def __init__(self, train_data, max_depth, weights, method="entropy"):
         self.train_data = copy.deepcopy(train_data)
+        self.weights = weights
         tree = self.genenerate_tree(train_data, max_depth, method)
         self.tree = tree
 
@@ -40,11 +42,12 @@ class DecisionTree():
             float: The entropy value.
         """
         entropy = 0
+        total_weight = sum(self.weights)
         for class_val in uniq_class_vals:
-            number_of_filtered_rows_of_specific_val = len(list(filter(lambda x: x == class_val, class_vals)))
-            if number_of_filtered_rows_of_specific_val > 0:
-                prob_of_class = number_of_filtered_rows_of_specific_val/len(class_vals)
-                entropy -= prob_of_class*math.log(prob_of_class)
+            class_weight = sum(w for v, w in zip(class_vals, self.weights) if v == class_val)
+            if class_weight > 0:
+                prob_of_class = class_weight / total_weight
+                entropy -= prob_of_class * math.log(prob_of_class)
         return entropy
 
     def calculate_gini_impurity(self, class_vals, uniq_class_vals):
@@ -59,10 +62,11 @@ class DecisionTree():
             float: The gini impurity value.
         """
         impurity = 1
+        total_weight = sum(self.weights)
         for class_val in uniq_class_vals:
-            number_of_filtered_rows_of_specific_val = len(list(filter(lambda x: x == class_val, class_vals)))
-            if number_of_filtered_rows_of_specific_val > 0:
-                prob_of_class = number_of_filtered_rows_of_specific_val/len(class_vals)
+            class_weight = sum(w for v, w in zip(class_vals, self.weights) if v == class_val)
+            if class_weight > 0:
+                prob_of_class = class_weight/total_weight
                 impurity -= prob_of_class*prob_of_class
         return impurity
 

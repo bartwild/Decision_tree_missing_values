@@ -5,7 +5,7 @@ from utils import ATTRS_NAMES, CLASS_VALUES, MAX_DEPTH, PERCENT_OF_TRAIN_DATA, A
 import numpy as np
 import random
 
-row_attrs, class_vals = get_data("car.data")
+row_attrs, class_vals = get_data("nursery.data")
 """
 uniq_attr_vals = np.unique([i[ATTR_TO_INDEX.get("persons")] for i in row_attrs])
 class_val_counter_by_attr = {
@@ -110,16 +110,17 @@ list_of_percent_train_data = [0.1, 0.5, 1, 5, 10, 20, 30, 40, 50, 60, 70, 80]
 labels_for_percent_of_train_data = []
 list_of_acc = []
 for i in list_of_percent_train_data:
-    print(i)
     train_data, test_data = split_random_to_train_and_test_data(row_attrs, class_vals, i)
-    decision_tree = DecisionTree(train_data, MAX_DEPTH, method='entropy')
-    acc = decision_tree.calculate_acc(test_data)
+
+    decision_tree = DecisionTree(train_data[0:2], MAX_DEPTH, train_data[2], method='entropy')
+    acc = decision_tree.calculate_acc(test_data[0:2])
     list_of_acc.append(acc)
-    print(acc)
-    decision_tree = DecisionTree(train_data, MAX_DEPTH, method='gini')
-    acc = decision_tree.calculate_acc(test_data)
+    print(f"Accuracy (Entropy): {acc}")
+
+    decision_tree = DecisionTree(train_data[0:2], MAX_DEPTH, train_data[2], method='gini')
+    acc = decision_tree.calculate_acc(test_data[0:2])
     list_of_acc.append(acc)
-    labels_for_percent_of_train_data.append('%.2f%%' % (i))
-    print(acc)
+    print(f"Accuracy (Gini): {acc}")
+    labels_for_percent_of_train_data.append(f'{i:.2f}%')
 visualize_tree(tree=decision_tree.tree, attrs_names=ATTRS_NAMES,output_name="tree.png")
 visulate_acc_per_input_method(list_of_acc, labels_for_percent_of_train_data)

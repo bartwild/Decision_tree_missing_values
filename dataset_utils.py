@@ -38,16 +38,25 @@ def mask_random_attributes(attrs_vals, masking_rate):
         masked_attrs_vals.append(masked_values)
     return masked_attrs_vals
 
+def calculate_weights(data):
+    weights = []
+    for row in data:
+        non_missing_count = sum(1 for value in row if value != 'missing')
+        total_count = len(row)
+        weight = non_missing_count / total_count
+        weights.append(weight)
+    return weights
+
 def split_random_to_train_and_test_data(attrs_vals, class_vals, percent_of_train_data, masking_rate=0.1):
     """
     Splits the given dataset into training and testing data randomly after applying random attribute masking.
     """
     attrs_vals = mask_random_attributes(attrs_vals, masking_rate)
-    
+    weights = calculate_weights(attrs_vals)  # Calculate weights for each row
     #mode_values = calculate_mode(attrs_vals)
     #attrs_vals = replace_missing_with_mode(attrs_vals, mode_values)
 
-    combined_data = list(zip(attrs_vals, class_vals))
+    combined_data = list(zip(attrs_vals, class_vals, weights))  # Include weights in the combined data
     random.shuffle(combined_data)
     #distributions = calculate_attribute_distribution([x for x,_ in combined_data])
     #attrs_vals = replace_missing_with_distribution([x for x,_ in combined_data], distributions)
@@ -55,11 +64,11 @@ def split_random_to_train_and_test_data(attrs_vals, class_vals, percent_of_train
     train_data = combined_data[:split_index]
     test_data = combined_data[split_index:]
 
-    train_attrs_vals, train_class_vals = zip(*train_data) if train_data else ([], [])
-    test_attrs_vals, test_class_vals = zip(*test_data) if test_data else ([], [])
+    train_attrs_vals, train_class_vals, train_weights = zip(*train_data) if train_data else ([], [], [])
+    test_attrs_vals, test_class_vals, test_weights = zip(*test_data) if test_data else ([], [], [])
 
-    return ({"attrs_index": list(range(len(attrs_vals[0]))), "attrs_vals": train_attrs_vals}, train_class_vals), \
-           ({"attrs_index": list(range(len(attrs_vals[0]))), "attrs_vals": test_attrs_vals}, test_class_vals)
+    return ({"attrs_index": list(range(len(attrs_vals[0]))), "attrs_vals": train_attrs_vals}, train_class_vals, train_weights),\
+            ({"attrs_index": list(range(len(attrs_vals[0]))), "attrs_vals": test_attrs_vals}, test_class_vals, test_weights)
 
 def get_data(name):
     """
