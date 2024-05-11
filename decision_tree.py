@@ -28,7 +28,7 @@ class DecisionTree():
         tree = self.genenerate_tree(train_data, max_depth, method)
         self.tree = tree
 
-    def calculate_entropy(self, class_vals, uniq_class_vals):
+    def calculate_entropy(self, class_vals, uniq_class_vals, weights):
         """
         Calculate the entropy of a given set of class values.
 
@@ -39,31 +39,34 @@ class DecisionTree():
         Returns:
             float: The entropy value.
         """
+        total_weight = sum(weights)
         entropy = 0
         for class_val in uniq_class_vals:
-            number_of_filtered_rows_of_specific_val = len(list(filter(lambda x: x == class_val, class_vals)))
-            if number_of_filtered_rows_of_specific_val > 0:
-                prob_of_class = number_of_filtered_rows_of_specific_val/len(class_vals)
-                entropy -= prob_of_class*math.log(prob_of_class)
+            weighted_class_sum = sum(weight for val, weight in zip(class_vals, weights) if val == class_val)
+            if weighted_class_sum > 0:
+                prob_of_class = weighted_class_sum / total_weight
+                entropy -= prob_of_class * math.log(prob_of_class)
         return entropy
 
-    def calculate_gini_impurity(self, class_vals, uniq_class_vals):
+    def calculate_gini_impurity(self, class_vals, uniq_class_vals, weights):
         """
-        Calculate the gini impurity of a given set of class values.
+        Calculate the weighted gini impurity of a given set of class values.
 
         Parameters:
             class_vals (list): A list of class values.
-            uniq_class_vals (list): A list of uniq class values.
+            uniq_class_vals (list): A list of unique class values.
+            weights (list): A list of weights corresponding to each example.
 
         Returns:
-            float: The gini impurity value.
+            float: The weighted gini impurity value.
         """
+        total_weight = sum(weights)
         impurity = 1
         for class_val in uniq_class_vals:
-            number_of_filtered_rows_of_specific_val = len(list(filter(lambda x: x == class_val, class_vals)))
-            if number_of_filtered_rows_of_specific_val > 0:
-                prob_of_class = number_of_filtered_rows_of_specific_val/len(class_vals)
-                impurity -= prob_of_class*prob_of_class
+            weighted_class_sum = sum(weight for val, weight in zip(class_vals, weights) if val == class_val)
+            if weighted_class_sum > 0:
+                prob_of_class = weighted_class_sum / total_weight
+                impurity -= (prob_of_class ** 2)
         return impurity
 
     def calculate_acc(self, test_data):
@@ -156,7 +159,7 @@ class DecisionTree():
         }
         return metrics
 
-    def inf_gain(self, attr_index, new_train_data, method):
+    def inf_gain(self, attr_index, new_train_data, method, filtered_weights):
         """
         Calculates the information gain for a given attribute index and new training data.
 
@@ -173,20 +176,22 @@ class DecisionTree():
         uniq_class_vals = np.unique(new_train_data[1])
         total_entropy = 0
         if method == "gini":
-            total_entropy = self.calculate_gini_impurity(new_train_data[1], uniq_class_vals)
+            total_entropy = self.calculate_gini_impurity(new_train_data[1], uniq_class_vals, filtered_weights)
         else:
-            total_entropy = self.calculate_entropy(new_train_data[1], uniq_class_vals)
+            total_entropy = self.calculate_entropy(new_train_data[1], uniq_class_vals, filtered_weights)
         info = 0
         for attr_val in uniq_attr_vals:
             filtered_class_vals = []
+            filtered_weights_for_attr_val = []
             for index, val in enumerate(attr_vals):
                 if val == attr_val:
                     filtered_class_vals.append(new_train_data[1][index])
+                    filtered_weights_for_attr_val.append(filtered_weights[index])
             attr_vals_prob = len(filtered_class_vals)/number_of_rows
             if method == "gini":
-                entropy = self.calculate_gini_impurity(filtered_class_vals, uniq_class_vals)
+                entropy = self.calculate_gini_impurity(filtered_class_vals, uniq_class_vals, filtered_weights_for_attr_val)
             else:
-                entropy = self.calculate_entropy(filtered_class_vals, uniq_class_vals)
+                entropy = self.calculate_entropy(filtered_class_vals, uniq_class_vals, filtered_weights_for_attr_val)
             info += attr_vals_prob*entropy
         return total_entropy - info
 
@@ -207,8 +212,9 @@ class DecisionTree():
         max_inf_gain = -1
         max_inf_gain_attr_index = None
         uniq_class_vals = np.unique(new_train_data[1])
+        filtered_weights = [len([x for x in attrs_vals if x != 'missing'])/len(attrs_vals) for attrs_vals in new_train_data[0]['attrs_vals']]
         for attr_index in new_train_data[0]["attrs_index"]:
-            info_gain = self.inf_gain(attr_index, new_train_data, method)
+            info_gain = self.inf_gain(attr_index, new_train_data, method, filtered_weights)
             if max_inf_gain < info_gain:
                 max_inf_gain = info_gain
                 max_inf_gain_attr_index = attr_index
