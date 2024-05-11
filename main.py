@@ -112,11 +112,11 @@ list_of_acc = []
 for i in list_of_percent_train_data:
     print(i)
     train_data, test_data = split_random_to_train_and_test_data(row_attrs, class_vals, i)
-    decision_tree = DecisionTree(train_data, MAX_DEPTH, method='entropy')
+    decision_tree = DecisionTree(train_data, MAX_DEPTH, method='entropy', FEM=True)
     acc = decision_tree.calculate_acc(test_data)
     list_of_acc.append(acc)
     print(acc)
-    decision_tree = DecisionTree(train_data, MAX_DEPTH, method='gini')
+    decision_tree = DecisionTree(train_data, MAX_DEPTH, method='gini', FEM=True)
     acc = decision_tree.calculate_acc(test_data)
     list_of_acc.append(acc)
     labels_for_percent_of_train_data.append('%.2f%%' % (i))

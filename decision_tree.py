@@ -23,9 +23,9 @@ class DecisionTree():
     tree = None
     train_data = None
 
-    def __init__(self, train_data, max_depth, method="entropy"):
+    def __init__(self, train_data, max_depth, method="entropy", FEM=True):
         self.train_data = copy.deepcopy(train_data)
-        tree = self.genenerate_tree(train_data, max_depth, method)
+        tree = self.genenerate_tree(train_data, max_depth, method, FEM)
         self.tree = tree
 
     def calculate_entropy(self, class_vals, uniq_class_vals, weights):
@@ -195,7 +195,7 @@ class DecisionTree():
             info += attr_vals_prob*entropy
         return total_entropy - info
 
-    def genenerate_tree(self, new_train_data, max_depth, method):
+    def genenerate_tree(self, new_train_data, max_depth, method, FEM):
         """
         Generates a decision tree based on the given training data.
 
@@ -212,7 +212,10 @@ class DecisionTree():
         max_inf_gain = -1
         max_inf_gain_attr_index = None
         uniq_class_vals = np.unique(new_train_data[1])
-        filtered_weights = [len([x for x in attrs_vals if x != 'missing'])/len(attrs_vals) for attrs_vals in new_train_data[0]['attrs_vals']]
+        if FEM:
+            filtered_weights = [len([x for x in attrs_vals if x != 'missing'])/len(attrs_vals) for attrs_vals in new_train_data[0]['attrs_vals']]
+        else:
+            filtered_weights = [1]*len(new_train_data[0]['attrs_vals'])
         for attr_index in new_train_data[0]["attrs_index"]:
             info_gain = self.inf_gain(attr_index, new_train_data, method, filtered_weights)
             if max_inf_gain < info_gain:
@@ -255,7 +258,7 @@ class DecisionTree():
                 if uniq_attr_vals[attr_val]["pure_class"] is False:
                     new_data[0]["attrs_vals"] = uniq_attr_vals[attr_val]["attrs_vals"]
                     new_data[1] = uniq_attr_vals[attr_val]["class_vals"]
-                    node = self.genenerate_tree(tuple(new_data), max_depth - 1, method)
+                    node = self.genenerate_tree(tuple(new_data), max_depth - 1, method, FEM)
                     tree.add_branch(attr_val, node)
         return tree
 
