@@ -1,6 +1,6 @@
 from dataset_utils import get_data, split_random_to_train_and_test_data
 from decision_tree import DecisionTree
-from visualization_utils import visualize_acc, visualize_metrics_of_confusion_matrix, visualize_class_counter, visualize_tree, visulate_acc_per_input_method
+from visualization_utils import visualize_acc, visualize_metrics_of_confusion_matrix, visualize_class_counter, visualize_tree, visulate_acc_per_input_method, visulate_acc_per_replacement_method
 from utils import ATTRS_NAMES, CLASS_VALUES, MAX_DEPTH, PERCENT_OF_TRAIN_DATA, ATTR_TO_INDEX
 import numpy as np
 import random
@@ -87,6 +87,7 @@ visualize_metrics_of_confusion_matrix(list_of_metrics, CLASS_VALUES)
 ######
 # compare acc of diff entropy calc
 ######
+# random forest
 """
 list_of_percent_train_data = [0.1, 0.5, 1, 5, 10]
 labels_for_percent_of_train_data = []
@@ -106,6 +107,8 @@ for i in list_of_percent_train_data:
 
 visulate_acc_per_input_method(list_of_acc, labels_for_percent_of_train_data)
 """
+# decision tree
+"""
 list_of_percent_train_data = [0.1, 0.5, 1, 5, 10, 20, 30, 40, 50, 60, 70, 80]
 labels_for_percent_of_train_data = []
 list_of_acc = []
@@ -123,3 +126,36 @@ for i in list_of_percent_train_data:
     print(acc)
 visualize_tree(tree=decision_tree.tree, attrs_names=ATTRS_NAMES,output_name="tree.png")
 visulate_acc_per_input_method(list_of_acc, labels_for_percent_of_train_data)
+"""
+######
+# compare acc of diff methods
+######
+list_of_percent_train_data = [0.1, 0.5, 1, 5, 10, 20, 30, 40, 50, 60, 70, 80]
+labels_for_percent_of_train_data = []
+list_of_acc = []
+for i in list_of_percent_train_data:
+
+    print(i)
+
+    train_data, test_data = split_random_to_train_and_test_data(row_attrs, class_vals, i, False)
+    decision_tree = DecisionTree(train_data, MAX_DEPTH, method='gini', FEM=False)
+    acc = decision_tree.calculate_acc(test_data)
+    list_of_acc.append(acc)
+    print(acc)
+
+    train_data, test_data = split_random_to_train_and_test_data(row_attrs, class_vals, i, True)
+    decision_tree = DecisionTree(train_data, MAX_DEPTH, method='gini', FEM=False)
+    acc = decision_tree.calculate_acc(test_data)
+    list_of_acc.append(acc)
+    print(acc)
+
+    train_data, test_data = split_random_to_train_and_test_data(row_attrs, class_vals, i, False)
+    decision_tree = DecisionTree(train_data, MAX_DEPTH, method='gini', FEM=True)
+    acc = decision_tree.calculate_acc(test_data)
+    list_of_acc.append(acc)
+    print(acc)
+
+    labels_for_percent_of_train_data.append('%.2f%%' % (i))
+
+visualize_tree(tree=decision_tree.tree, attrs_names=ATTRS_NAMES,output_name="tree.png")
+visulate_acc_per_replacement_method(list_of_acc, labels_for_percent_of_train_data)

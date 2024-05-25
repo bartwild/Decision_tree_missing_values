@@ -167,3 +167,38 @@ def visulate_acc_per_input_method(list_of_acc, labels):
     ax.set_xticklabels(labels)
     ax.legend()
     plt.savefig("entropia_test.png")
+
+
+def visulate_acc_per_replacement_method(list_of_acc, labels):
+    """
+    Visualizes the accuracy values using a bar graph for three replacement methods.
+
+    Parameters:
+    list_of_acc (list): A list of accuracy values.
+    labels (list): A list of x-axis values.
+
+    Returns:
+    None
+    """
+    # Split the accuracy values for the three methods
+    method1_acc = list_of_acc[0::3]
+    method2_acc = list_of_acc[1::3]
+    method3_acc = list_of_acc[2::3]
+    
+    bar_width = 0.25  # Adjust bar width for three methods
+    index = np.arange(len(labels))
+    
+    fig, ax = plt.subplots()
+    _ = ax.bar(index, method1_acc, bar_width, label='nowa wartość')
+    _ = ax.bar(index + bar_width, method2_acc, bar_width, label='dominanta')
+    _ = ax.bar(index + 2 * bar_width, method3_acc, bar_width, label='przykładów ułamkowych')
+    
+    ax.set_xlabel('Percentage of Training Data')
+    ax.set_ylabel('Accuracy')
+    ax.set_title('Comparison of Three Methods')
+    ax.set_xticks(index + bar_width)
+    ax.set_xticklabels(labels)
+    ax.legend()
+    
+    plt.savefig("metody_test.png")
+    plt.show()

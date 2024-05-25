@@ -38,14 +38,15 @@ def mask_random_attributes(attrs_vals, masking_rate):
         masked_attrs_vals.append(masked_values)
     return masked_attrs_vals
 
-def split_random_to_train_and_test_data(attrs_vals, class_vals, percent_of_train_data, masking_rate=0.1):
+def split_random_to_train_and_test_data(attrs_vals, class_vals, percent_of_train_data, replace_with_mode, masking_rate=0.1):
     """
     Splits the given dataset into training and testing data randomly after applying random attribute masking.
     """
     attrs_vals = mask_random_attributes(attrs_vals, masking_rate)
     
-    #mode_values = calculate_mode(attrs_vals)
-    #attrs_vals = replace_missing_with_mode(attrs_vals, mode_values)
+    if replace_with_mode:
+        mode_values = calculate_mode(attrs_vals)
+        attrs_vals = replace_missing_with_mode(attrs_vals, mode_values)
 
     combined_data = list(zip(attrs_vals, class_vals))
     random.shuffle(combined_data)
