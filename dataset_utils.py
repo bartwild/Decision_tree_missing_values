@@ -1,5 +1,7 @@
 import random
 from collections import Counter
+import copy
+import sys
 
 def calculate_mode(attributes):
     """
@@ -38,15 +40,14 @@ def mask_random_attributes(attrs_vals, masking_rate):
         masked_attrs_vals.append(masked_values)
     return masked_attrs_vals
 
-def split_random_to_train_and_test_data(attrs_vals, class_vals, percent_of_train_data, replace_with_mode, masking_rate=0.1):
+def split_random_to_train_and_test_data(attrs_vals, class_vals, percent_of_train_data, masking_rate=0.1):
     """
     Splits the given dataset into training and testing data randomly after applying random attribute masking.
     """
     attrs_vals = mask_random_attributes(attrs_vals, masking_rate)
-    
-    if replace_with_mode:
-        mode_values = calculate_mode(attrs_vals)
-        attrs_vals = replace_missing_with_mode(attrs_vals, mode_values)
+
+    #mode_values = calculate_mode(attrs_vals)
+    #attrs_vals = replace_missing_with_mode(attrs_vals, mode_values)
 
     combined_data = list(zip(attrs_vals, class_vals))
     random.shuffle(combined_data)
@@ -61,6 +62,56 @@ def split_random_to_train_and_test_data(attrs_vals, class_vals, percent_of_train
 
     return ({"attrs_index": list(range(len(attrs_vals[0]))), "attrs_vals": train_attrs_vals}, train_class_vals), \
            ({"attrs_index": list(range(len(attrs_vals[0]))), "attrs_vals": test_attrs_vals}, test_class_vals)
+
+def split_random_to_train_and_test_data_diff_methods(attrs_vals, class_vals, percent_of_train_data, masking_rate=0.1):
+    """
+    Splits the given dataset into training and testing data randomly after applying random attribute masking.
+    """
+    attrs_vals = mask_random_attributes(attrs_vals, masking_rate)
+    attrs_vals_mode = copy.deepcopy(attrs_vals)
+    attrs_vals_distrib = copy.deepcopy(attrs_vals)
+    rand_seed = random.randint(-sys.maxsize-1, sys.maxsize)
+
+    # masked data
+    combined_data = list(zip(attrs_vals, class_vals))
+    random.seed(rand_seed)
+    random.shuffle(combined_data)
+    split_index = int(len(combined_data) * (percent_of_train_data / 100))
+    train_data = combined_data[:split_index]
+    test_data = combined_data[split_index:]
+    train_attrs_vals, train_class_vals = zip(*train_data) if train_data else ([], [])
+    test_attrs_vals, test_class_vals = zip(*test_data) if test_data else ([], [])
+
+    # masked data with mode replacement
+    mode_values = calculate_mode(attrs_vals_mode)
+    attrs_vals_mode = replace_missing_with_mode(attrs_vals_mode, mode_values)
+    combined_data = list(zip(attrs_vals_mode, class_vals))
+    random.seed(rand_seed)
+    random.shuffle(combined_data)
+    split_index = int(len(combined_data) * (percent_of_train_data / 100))
+    train_data = combined_data[:split_index]
+    test_data = combined_data[split_index:]
+    train_attrs_vals_mode, train_class_vals_mode = zip(*train_data) if train_data else ([], [])
+    test_attrs_vals_mode, test_class_vals_mode = zip(*test_data) if test_data else ([], [])
+
+    # masked data with distribution replacement
+    combined_data = list(zip(attrs_vals_distrib, class_vals))
+    random.seed(rand_seed)
+    random.shuffle(combined_data)
+    distributions = calculate_attribute_distribution([x for x,_ in combined_data])
+    attrs_vals_distrib = replace_missing_with_distribution([x for x,_ in combined_data], distributions)
+    split_index = int(len(combined_data) * (percent_of_train_data / 100))
+    train_data = combined_data[:split_index]
+    test_data = combined_data[split_index:]
+    train_attrs_vals_distrib, train_class_vals_distrib = zip(*train_data) if train_data else ([], [])
+    test_attrs_vals_distrib, test_class_vals_distrib = zip(*test_data) if test_data else ([], [])
+
+    return ({"attrs_index": list(range(len(attrs_vals[0]))), "attrs_vals": train_attrs_vals}, train_class_vals), \
+           ({"attrs_index": list(range(len(attrs_vals[0]))), "attrs_vals": test_attrs_vals}, test_class_vals), \
+           ({"attrs_index": list(range(len(attrs_vals_mode[0]))), "attrs_vals": train_attrs_vals_mode}, train_class_vals_mode), \
+           ({"attrs_index": list(range(len(attrs_vals_mode[0]))), "attrs_vals": test_attrs_vals_mode}, test_class_vals_mode), \
+           ({"attrs_index": list(range(len(attrs_vals_distrib[0]))), "attrs_vals": train_attrs_vals_distrib}, train_class_vals_distrib), \
+           ({"attrs_index": list(range(len(attrs_vals_distrib[0]))), "attrs_vals": test_attrs_vals_distrib}, test_class_vals_distrib)
 
 def get_data(name):
     """

@@ -1,4 +1,4 @@
-from dataset_utils import get_data, split_random_to_train_and_test_data
+from dataset_utils import get_data, split_random_to_train_and_test_data, split_random_to_train_and_test_data_diff_methods
 from decision_tree import DecisionTree
 from visualization_utils import visualize_acc, visualize_metrics_of_confusion_matrix, visualize_class_counter, visualize_tree, visulate_acc_per_input_method, visulate_acc_per_replacement_method
 from utils import ATTRS_NAMES, CLASS_VALUES, MAX_DEPTH, PERCENT_OF_TRAIN_DATA, ATTR_TO_INDEX
@@ -136,20 +136,19 @@ list_of_acc = []
 for i in list_of_percent_train_data:
 
     print(i)
+    train_data, test_data, train_data_mode, test_data_mode, train_data_distrib, test_data_distrib = \
+        split_random_to_train_and_test_data_diff_methods(row_attrs, class_vals, i)
 
-    train_data, test_data = split_random_to_train_and_test_data(row_attrs, class_vals, i, False)
     decision_tree = DecisionTree(train_data, MAX_DEPTH, method='gini', FEM=False)
     acc = decision_tree.calculate_acc(test_data)
     list_of_acc.append(acc)
     print(acc)
 
-    train_data, test_data = split_random_to_train_and_test_data(row_attrs, class_vals, i, True)
-    decision_tree = DecisionTree(train_data, MAX_DEPTH, method='gini', FEM=False)
-    acc = decision_tree.calculate_acc(test_data)
+    decision_tree = DecisionTree(train_data_mode, MAX_DEPTH, method='gini', FEM=False)
+    acc = decision_tree.calculate_acc(test_data_mode)
     list_of_acc.append(acc)
     print(acc)
 
-    train_data, test_data = split_random_to_train_and_test_data(row_attrs, class_vals, i, False)
     decision_tree = DecisionTree(train_data, MAX_DEPTH, method='gini', FEM=True)
     acc = decision_tree.calculate_acc(test_data)
     list_of_acc.append(acc)
