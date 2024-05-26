@@ -23,10 +23,11 @@ class DecisionTree():
     tree = None
     train_data = None
 
-    def __init__(self, train_data, max_depth, method="entropy", FEM=True):
+    def __init__(self, train_data, max_depth, default_prediction, method="entropy", FEM=True):
         self.train_data = copy.deepcopy(train_data)
         tree = self.genenerate_tree(train_data, max_depth, method, FEM)
         self.tree = tree
+        self.default_prediction = default_prediction
 
     def calculate_entropy(self, class_vals, uniq_class_vals, weights):
         """
@@ -109,7 +110,7 @@ class DecisionTree():
             "tn": 0  # not detected and it's not this class
         }
         for i, row in enumerate(test_data[0]["attrs_vals"]):
-            decision = self.predict_random_forest(row)
+            decision = self.predict_decision_tree(row)
             if decision == checked_class:
                 if checked_class == test_data[1][i]:
                     confusion_matrix["tp"] += 1
@@ -278,11 +279,11 @@ class DecisionTree():
             attr_index = node.attr_index
             input_attr_val = input_data[attr_index]
             if input_attr_val not in node.branches:
-                return None
+                return self.default_prediction
             node = node.branches[input_attr_val]
         if isinstance(node, Leaf):
             return node.decision
-        return None
+        return self.default_prediction
 
     def predict_decision_tree(self, input_data):
         """

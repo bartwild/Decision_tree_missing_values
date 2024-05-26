@@ -202,3 +202,38 @@ def visulate_acc_per_replacement_method(list_of_acc, labels):
     
     plt.savefig("metody_test.png")
     plt.show()
+
+
+def visulate_f1_per_replacement_method(list_of_f1, labels):
+    """
+    Visualizes the F1 score using a bar graph for three replacement methods.
+
+    Parameters:
+    list_of_f1 (list): A list of f1 score values.
+    labels (list): A list of x-axis values.
+
+    Returns:
+    None
+    """
+    # Split the f1 score values for the three methods
+    method1_f1 = list_of_f1[0::3]
+    method2_f1 = list_of_f1[1::3]
+    method3_f1 = list_of_f1[2::3]
+    
+    bar_width = 0.25  # Adjust bar width for three methods
+    index = np.arange(len(labels))
+    
+    fig, ax = plt.subplots()
+    _ = ax.bar(index, method1_f1, bar_width, label='nowa wartość')
+    _ = ax.bar(index + bar_width, method2_f1, bar_width, label='dominanta')
+    _ = ax.bar(index + 2 * bar_width, method3_f1, bar_width, label='przykładów ułamkowych')
+    
+    ax.set_xlabel('Percentage of Training Data')
+    ax.set_ylabel('F1 score')
+    ax.set_title('Comparison of Three Methods')
+    ax.set_xticks(index + bar_width)
+    ax.set_xticklabels(labels)
+    ax.legend()
+    
+    plt.savefig("metody_test_f1.png")
+    plt.show()
