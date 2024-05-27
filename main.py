@@ -6,7 +6,7 @@ import numpy as np
 import random
 from sklearn.metrics import f1_score, confusion_matrix
 
-row_attrs, class_vals = get_data("car.data")
+row_attrs, class_vals = get_data("nursery.data")
 """
 uniq_attr_vals = np.unique([i[ATTR_TO_INDEX.get("persons")] for i in row_attrs])
 class_val_counter_by_attr = {
@@ -53,7 +53,7 @@ print(acc)
 visualize_tree(random_forest.trees[0], ATTRS_NAMES, "tree-small.png")
 """
 #######
- # compare acc by percent of train data
+# compare acc by percent of train data
 #######
 """
 list_of_percent_train_data = [i*0.01 for i in range(5, 20, 5)] + [i*0.1 for i in range(2, 10, 4)] + [i for i in range(1, 5, 2)] + [i for i in range(5, 35, 5)] + [i for i in range(35, 85, 10)]
@@ -131,7 +131,7 @@ visulate_acc_per_input_method(list_of_acc, labels_for_percent_of_train_data)
 ######
 # compare acc of diff methods
 ######
-list_of_percent_train_data = [0.1, 0.5, 1, 5, 10, 20, 30, 40, 50, 60, 70, 80]
+list_of_percent_train_data = [20, 30, 40, 50, 60, 70, 80]
 labels_for_percent_of_train_data = []
 list_of_acc = []
 list_of_f1 = []

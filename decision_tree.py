@@ -91,6 +91,18 @@ class DecisionTree():
                 wrong_predictions += 1
         return correct_predictions / (correct_predictions + wrong_predictions)
 
+    def calculate_majority_class(self, class_vals):
+        """
+        Calculate the majority class in the given class values.
+
+        Parameters:
+            class_vals (list): A list of class values.
+
+        Returns:
+            object: The majority class.
+        """
+        return max(set(class_vals), key=class_vals.count)
+
     def calculate_confusion_matrix(self, test_data, checked_class):
         """
         Calculates the confusion matrix for a given test data and checked class.
@@ -223,7 +235,8 @@ class DecisionTree():
                 max_inf_gain = info_gain
                 max_inf_gain_attr_index = attr_index
         uniq_attr_vals = {}
-        tree = Node(max_inf_gain_attr_index)
+        majority_class = self.calculate_majority_class(new_train_data[1])
+        tree = Node(max_inf_gain_attr_index, majority_class)
         for i, row in enumerate(new_train_data[0]["attrs_vals"]):
             if row[max_inf_gain_attr_index] not in uniq_attr_vals:
                 uniq_attr_vals[row[max_inf_gain_attr_index]] = {}
@@ -279,11 +292,12 @@ class DecisionTree():
             attr_index = node.attr_index
             input_attr_val = input_data[attr_index]
             if input_attr_val not in node.branches:
-                return self.default_prediction
+                print(input_attr_val)
+                return node.default_prediction
             node = node.branches[input_attr_val]
         if isinstance(node, Leaf):
             return node.decision
-        return self.default_prediction
+        return node.default_prediction
 
     def predict_decision_tree(self, input_data):
         """
@@ -306,9 +320,10 @@ class Node:
         attr_index (int): The index of the attribute associated with this node.
         branches (dict): A dictionary mapping attribute values to child nodes.
     """
-    def __init__(self, attr_index):
+    def __init__(self, attr_index, default_prediction):
         self.attr_index = attr_index
         self.branches = {}
+        self.default_prediction = default_prediction
 
     def add_branch(self, attr_val, children):
         self.branches[attr_val] = children
