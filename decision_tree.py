@@ -28,6 +28,7 @@ class DecisionTree():
         tree = self.genenerate_tree(train_data, max_depth, method, FEM)
         self.tree = tree
         self.default_prediction = default_prediction
+        self.attr_value_freq = self.calculate_attr_value_freq(train_data)
 
     def calculate_entropy(self, class_vals, uniq_class_vals, weights):
         """
@@ -275,8 +276,28 @@ class DecisionTree():
                     node = self.genenerate_tree(tuple(new_data), max_depth - 1, method, FEM)
                     tree.add_branch(attr_val, node)
         return tree
+    
+    def calculate_attr_value_freq(self, train_data):
+        """
+        Calculate the frequency of each attribute value in the training data.
 
-    def predict_tree_decision(self, tree, input_data):
+        Args:
+            train_data (tuple): Training data consisting of attribute values and class labels.
+
+        Returns:
+            dict: A dictionary where keys are attribute indices and values are dictionaries
+                  mapping attribute values to their frequencies.
+        """
+        attr_value_freq = {i: {} for i in train_data[0]["attrs_index"]}
+        for row in train_data[0]["attrs_vals"]:
+            for attr_index, attr_val in enumerate(row):
+                if attr_val not in attr_value_freq[attr_index]:
+                    attr_value_freq[attr_index][attr_val] = 0
+                attr_value_freq[attr_index][attr_val] += 1
+        return attr_value_freq
+
+
+    def predict_tree_decision(self, tree, input_data, fem):
         """
         Predicts the decision for a given input data using a decision tree.
 
@@ -291,15 +312,24 @@ class DecisionTree():
         while isinstance(node, Node):
             attr_index = node.attr_index
             input_attr_val = input_data[attr_index]
+            if input_attr_val == 'missing' and fem:
+                class_votes = {}
+                total_weight = sum(self.attr_value_freq[attr_index].values())
+                for attr_val, freq in self.attr_value_freq[attr_index].items():
+                    if attr_val in node.branches:
+                        predicted_class = self.predict_tree_decision(node.branches[attr_val], input_data, fem)
+                        if predicted_class not in class_votes:
+                            class_votes[predicted_class] = 0
+                        class_votes[predicted_class] += freq / total_weight
+                return max(class_votes, key=class_votes.get)
             if input_attr_val not in node.branches:
-                print(input_attr_val)
                 return node.default_prediction
             node = node.branches[input_attr_val]
         if isinstance(node, Leaf):
             return node.decision
         return node.default_prediction
 
-    def predict_decision_tree(self, input_data):
+    def predict_decision_tree(self, input_data, fem=False):
         """
         Predicts the output for the given input data using the Decision Tree model.
 
@@ -309,7 +339,7 @@ class DecisionTree():
         Returns:
         - The predicted output based on the Decision Tree model.
         """
-        return self.predict_tree_decision(self.tree, input_data)
+        return self.predict_tree_decision(self.tree, input_data, fem)
 
 
 class Node:
