@@ -165,8 +165,8 @@ for i in list_of_percent_train_data:
 
     decision_tree = DecisionTree(train_data, MAX_DEPTH, default_prediction, method='gini', FEM=True)
     acc = decision_tree.calculate_acc(test_data)
-    cm = confusion_matrix(test_data[1], [decision_tree.predict_decision_tree(row, True) for i, row in enumerate(test_data[0]["attrs_vals"])])
-    f1 = f1_score(test_data[1], [decision_tree.predict_decision_tree(row, True) for i, row in enumerate(test_data[0]["attrs_vals"])], average='weighted')
+    cm = confusion_matrix(test_data[1], [decision_tree.predict_decision_tree(row, voting=True) for i, row in enumerate(test_data[0]["attrs_vals"])])
+    f1 = f1_score(test_data[1], [decision_tree.predict_decision_tree(row, voting=True) for i, row in enumerate(test_data[0]["attrs_vals"])], average='weighted')
     list_of_acc.append(acc)
     list_of_f1.append(f1)
     print(acc)

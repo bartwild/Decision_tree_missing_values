@@ -297,7 +297,7 @@ class DecisionTree():
         return attr_value_freq
 
 
-    def predict_tree_decision(self, tree, input_data, fem):
+    def predict_tree_decision(self, tree, input_data, voting):
         """
         Predicts the decision for a given input data using a decision tree.
 
@@ -312,12 +312,12 @@ class DecisionTree():
         while isinstance(node, Node):
             attr_index = node.attr_index
             input_attr_val = input_data[attr_index]
-            if input_attr_val == 'missing' and fem:
+            if input_attr_val == 'missing' and voting:
                 class_votes = {}
                 total_weight = sum(self.attr_value_freq[attr_index].values())
                 for attr_val, freq in self.attr_value_freq[attr_index].items():
                     if attr_val in node.branches:
-                        predicted_class = self.predict_tree_decision(node.branches[attr_val], input_data, fem)
+                        predicted_class = self.predict_tree_decision(node.branches[attr_val], input_data, voting)
                         if predicted_class not in class_votes:
                             class_votes[predicted_class] = 0
                         class_votes[predicted_class] += freq / total_weight
@@ -329,7 +329,7 @@ class DecisionTree():
             return node.decision
         return node.default_prediction
 
-    def predict_decision_tree(self, input_data, fem=False):
+    def predict_decision_tree(self, input_data, voting=False):
         """
         Predicts the output for the given input data using the Decision Tree model.
 
@@ -339,7 +339,7 @@ class DecisionTree():
         Returns:
         - The predicted output based on the Decision Tree model.
         """
-        return self.predict_tree_decision(self.tree, input_data, fem)
+        return self.predict_tree_decision(self.tree, input_data, voting)
 
 
 class Node:
