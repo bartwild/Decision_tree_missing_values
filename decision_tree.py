@@ -23,12 +23,82 @@ class DecisionTree():
     tree = None
     train_data = None
 
-    def __init__(self, train_data, max_depth, default_prediction, method="entropy", FEM=True):
+    def __init__(self, train_data, max_depth, default_prediction, method="entropy", use_FEM=True):
         self.train_data = copy.deepcopy(train_data)
-        tree = self.genenerate_tree(train_data, max_depth, method, FEM)
-        self.tree = tree
         self.default_prediction = default_prediction
         self.attr_value_freq = self.calculate_attr_value_freq(train_data)
+
+        self.train_data = (self.train_data[0], self.train_data[1], tuple([1]*len(self.train_data[1])))
+        if use_FEM:
+            while "missing" in np.array(list(self.train_data[0]["attrs_vals"])).flatten():
+                self.train_data = self.fractional_examples_method()            
+
+        self.tree = self.genenerate_tree(self.train_data, max_depth, method, use_FEM)
+
+    def fractional_examples_method(self):
+
+        FEM_train_data = [{"attrs_index": [], "attrs_vals": []}, [], []]
+        FEM_train_data[0]["attrs_index"] = copy.deepcopy(self.train_data[0]["attrs_index"])
+
+
+        class_counts_for_attr_val_for_attr_index = {}
+        for attr_index in self.train_data[0]["attrs_index"]:
+
+            attr_column = [row[attr_index] for row in self.train_data[0]["attrs_vals"]]
+            class_counts_for_attr_val = {}
+            for i, attr_val in enumerate(attr_column):
+
+                if attr_val == "missing":
+                    continue
+
+                if attr_val in class_counts_for_attr_val.keys():
+                    if self.train_data[1][i] in class_counts_for_attr_val[attr_val].keys():
+                        class_counts_for_attr_val[attr_val][self.train_data[1][i]] += 1
+                    else:
+                        class_counts_for_attr_val[attr_val][self.train_data[1][i]] = 1
+                else:
+                    class_counts_for_attr_val[attr_val] = {}
+                    class_counts_for_attr_val[attr_val][self.train_data[1][i]] = 1
+
+            class_counts_for_attr_val_for_attr_index[attr_index] = class_counts_for_attr_val
+
+
+        for i, row in enumerate(self.train_data[0]["attrs_vals"]):
+
+            if "missing" in row:
+                for attr_index in self.train_data[0]["attrs_index"]:
+                        
+                        if row[attr_index] == "missing":
+                            for attr_val in class_counts_for_attr_val_for_attr_index[attr_index].keys():
+
+                                row_copy = copy.deepcopy(row)
+                                row_copy[attr_index] = attr_val
+                                FEM_train_data[0]["attrs_vals"].append(row_copy)
+                                FEM_train_data[1].append(copy.deepcopy(self.train_data[1][i]))
+                                try:
+                                    freq = class_counts_for_attr_val_for_attr_index[attr_index][attr_val][self.train_data[1][i]]
+                                except:
+                                    freq = 0
+                                freq /= sum(class_counts_for_attr_val_for_attr_index[attr_index][attr_val].values())
+                                FEM_train_data[2].append(freq * copy.deepcopy(self.train_data[2][i]))
+
+                            break
+
+            else:
+
+                FEM_train_data[0]["attrs_vals"].append(copy.deepcopy(row))
+                FEM_train_data[1].append(copy.deepcopy(self.train_data[1][i]))
+                FEM_train_data[2].append(copy.deepcopy(self.train_data[2][i]))
+
+
+        FEM_train_data[0]["attrs_vals"] = tuple(FEM_train_data[0]["attrs_vals"])
+        FEM_train_data[1] = tuple(FEM_train_data[1])
+        FEM_train_data[2] = tuple(FEM_train_data[2])
+        FEM_train_data = tuple(FEM_train_data)
+
+        return FEM_train_data
+
+        
 
     def calculate_entropy(self, class_vals, uniq_class_vals, weights):
         """
@@ -117,10 +187,10 @@ class DecisionTree():
                   false negatives (fn), and true negatives (tn).
         """
         confusion_matrix = {
-            "tp": 0,  # detected and it's true
+            "tp": 0,  # detected and it"s true
             "fp": 0,  # detected but not true
-            "fn": 0,  # not detected but it's this class
-            "tn": 0  # not detected and it's not this class
+            "fn": 0,  # not detected but it"s this class
+            "tn": 0  # not detected and it"s not this class
         }
         for i, row in enumerate(test_data[0]["attrs_vals"]):
             decision = self.predict_decision_tree(row)
@@ -173,7 +243,7 @@ class DecisionTree():
         }
         return metrics
 
-    def inf_gain(self, attr_index, new_train_data, method, filtered_weights):
+    def inf_gain(self, attr_index, new_train_data, method):
         """
         Calculates the information gain for a given attribute index and new training data.
 
@@ -186,21 +256,22 @@ class DecisionTree():
         """
         number_of_rows = len(new_train_data[0]["attrs_vals"])
         attr_vals = [i[attr_index] for i in new_train_data[0]["attrs_vals"]]
+        FEM_weights = new_train_data[2]
         uniq_attr_vals = np.unique(attr_vals)
         uniq_class_vals = np.unique(new_train_data[1])
         total_entropy = 0
         if method == "gini":
-            total_entropy = self.calculate_gini_impurity(new_train_data[1], uniq_class_vals, filtered_weights)
+            total_entropy = self.calculate_gini_impurity(new_train_data[1], uniq_class_vals, FEM_weights)
         else:
-            total_entropy = self.calculate_entropy(new_train_data[1], uniq_class_vals, filtered_weights)
+            total_entropy = self.calculate_entropy(new_train_data[1], uniq_class_vals, FEM_weights)
         info = 0
         for attr_val in uniq_attr_vals:
             filtered_class_vals = []
             filtered_weights_for_attr_val = []
-            for index, val in enumerate(attr_vals):
+            for index, (val, weight) in enumerate(zip(attr_vals, FEM_weights)):
                 if val == attr_val:
                     filtered_class_vals.append(new_train_data[1][index])
-                    filtered_weights_for_attr_val.append(filtered_weights[index])
+                    filtered_weights_for_attr_val.append(weight)
             attr_vals_prob = len(filtered_class_vals)/number_of_rows
             if method == "gini":
                 entropy = self.calculate_gini_impurity(filtered_class_vals, uniq_class_vals, filtered_weights_for_attr_val)
@@ -209,7 +280,7 @@ class DecisionTree():
             info += attr_vals_prob*entropy
         return total_entropy - info
 
-    def genenerate_tree(self, new_train_data, max_depth, method, FEM):
+    def genenerate_tree(self, new_train_data, max_depth, method, use_FEM):
         """
         Generates a decision tree based on the given training data.
 
@@ -226,12 +297,8 @@ class DecisionTree():
         max_inf_gain = -1
         max_inf_gain_attr_index = None
         uniq_class_vals = np.unique(new_train_data[1])
-        if FEM:
-            filtered_weights = [len([x for x in attrs_vals if x != 'missing'])/len(attrs_vals) for attrs_vals in new_train_data[0]['attrs_vals']]
-        else:
-            filtered_weights = [1]*len(new_train_data[0]['attrs_vals'])
         for attr_index in new_train_data[0]["attrs_index"]:
-            info_gain = self.inf_gain(attr_index, new_train_data, method, filtered_weights)
+            info_gain = self.inf_gain(attr_index, new_train_data, method)
             if max_inf_gain < info_gain:
                 max_inf_gain = info_gain
                 max_inf_gain_attr_index = attr_index
@@ -243,17 +310,23 @@ class DecisionTree():
                 uniq_attr_vals[row[max_inf_gain_attr_index]] = {}
                 uniq_attr_vals[row[max_inf_gain_attr_index]]["attrs_vals"] = [row]
                 uniq_attr_vals[row[max_inf_gain_attr_index]]["class_vals"] = [new_train_data[1][i]]
+                uniq_attr_vals[row[max_inf_gain_attr_index]]["FEM_weight"] = [new_train_data[2][i]]
                 uniq_attr_vals[row[max_inf_gain_attr_index]]["class_vals_count"] = {}
+                uniq_attr_vals[row[max_inf_gain_attr_index]]["FEM_class_vals_count_weighted"] = {}
                 for k in uniq_class_vals:
                     uniq_attr_vals[row[max_inf_gain_attr_index]]["class_vals_count"][k] = 0
+                    uniq_attr_vals[row[max_inf_gain_attr_index]]["FEM_class_vals_count_weighted"][k] = 0
                 uniq_attr_vals[row[max_inf_gain_attr_index]]["count"] = 1
                 uniq_attr_vals[row[max_inf_gain_attr_index]]["class_vals_count"][new_train_data[1][i]] += 1
+                uniq_attr_vals[row[max_inf_gain_attr_index]]["class_vals_count"][new_train_data[1][i]] += new_train_data[2][i]
                 uniq_attr_vals[row[max_inf_gain_attr_index]]["pure_class"] = False
             else:
                 uniq_attr_vals[row[max_inf_gain_attr_index]]["count"] += 1
                 uniq_attr_vals[row[max_inf_gain_attr_index]]["class_vals_count"][new_train_data[1][i]] += 1
+                uniq_attr_vals[row[max_inf_gain_attr_index]]["FEM_class_vals_count_weighted"][new_train_data[1][i]] += new_train_data[2][i]
                 uniq_attr_vals[row[max_inf_gain_attr_index]]["attrs_vals"].append(row)
                 uniq_attr_vals[row[max_inf_gain_attr_index]]["class_vals"].append(new_train_data[1][i])
+                uniq_attr_vals[row[max_inf_gain_attr_index]]["FEM_weight"].append(new_train_data[2][i])
         if max_depth == 1 or len(new_train_data[0]["attrs_index"]) == 1:
             for attr_val in uniq_attr_vals:
                 the_best_class_val = None
@@ -261,10 +334,11 @@ class DecisionTree():
                 for class_val in uniq_attr_vals[attr_val]["class_vals_count"]:
                     if uniq_attr_vals[attr_val]["class_vals_count"][class_val] >= class_val_count:
                         the_best_class_val = class_val
+                        class_val_count = uniq_attr_vals[attr_val]["class_vals_count"][class_val]
                 tree.add_branch(attr_val, Leaf(the_best_class_val))
         else:
             for attr_val in uniq_attr_vals.keys():
-                new_data = [{"attrs_index": list(filter(lambda x: x != max_inf_gain_attr_index, new_train_data[0]["attrs_index"])), "attrs_vals": []}, []]
+                new_data = [{"attrs_index": list(filter(lambda x: x != max_inf_gain_attr_index, new_train_data[0]["attrs_index"])), "attrs_vals": []}, [], []]
                 for class_val in uniq_attr_vals[attr_val]["class_vals_count"]:
                     if uniq_attr_vals[attr_val]["class_vals_count"][class_val] == uniq_attr_vals[attr_val]["count"]:
                         tree.add_branch(attr_val, Leaf(class_val))  # pure class
@@ -273,7 +347,8 @@ class DecisionTree():
                 if uniq_attr_vals[attr_val]["pure_class"] is False:
                     new_data[0]["attrs_vals"] = uniq_attr_vals[attr_val]["attrs_vals"]
                     new_data[1] = uniq_attr_vals[attr_val]["class_vals"]
-                    node = self.genenerate_tree(tuple(new_data), max_depth - 1, method, FEM)
+                    new_data[2] = uniq_attr_vals[attr_val]["FEM_weight"]
+                    node = self.genenerate_tree(tuple(new_data), max_depth - 1, method, use_FEM)
                     tree.add_branch(attr_val, node)
         return tree
     
@@ -297,7 +372,7 @@ class DecisionTree():
         return attr_value_freq
 
 
-    def predict_tree_decision(self, tree, input_data, voting):
+    def predict_tree_decision(self, tree, input_data, use_voting):
         """
         Predicts the decision for a given input data using a decision tree.
 
@@ -312,12 +387,12 @@ class DecisionTree():
         while isinstance(node, Node):
             attr_index = node.attr_index
             input_attr_val = input_data[attr_index]
-            if input_attr_val == 'missing' and voting:
+            if input_attr_val == "missing" and use_voting:
                 class_votes = {}
                 total_weight = sum(self.attr_value_freq[attr_index].values())
                 for attr_val, freq in self.attr_value_freq[attr_index].items():
                     if attr_val in node.branches:
-                        predicted_class = self.predict_tree_decision(node.branches[attr_val], input_data, voting)
+                        predicted_class = self.predict_tree_decision(node.branches[attr_val], input_data, use_voting)
                         if predicted_class not in class_votes:
                             class_votes[predicted_class] = 0
                         class_votes[predicted_class] += freq / total_weight
@@ -329,7 +404,7 @@ class DecisionTree():
             return node.decision
         return node.default_prediction
 
-    def predict_decision_tree(self, input_data, voting=False):
+    def predict_decision_tree(self, input_data, use_voting=False):
         """
         Predicts the output for the given input data using the Decision Tree model.
 
@@ -339,7 +414,7 @@ class DecisionTree():
         Returns:
         - The predicted output based on the Decision Tree model.
         """
-        return self.predict_tree_decision(self.tree, input_data, voting)
+        return self.predict_tree_decision(self.tree, input_data, use_voting)
 
 
 class Node:
