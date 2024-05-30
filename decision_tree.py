@@ -29,27 +29,22 @@ class DecisionTree():
         self.attr_value_freq = self.calculate_attr_value_freq(train_data)
 
         self.train_data = (self.train_data[0], self.train_data[1], tuple([1]*len(self.train_data[1])))
-        if use_FEM:
-            while "missing" in np.array(list(self.train_data[0]["attrs_vals"])).flatten():
-                self.train_data = self.fractional_examples_method()            
+
+        self.set_class_counts_for_attr_val_for_attr_index()
 
         self.tree = self.genenerate_tree(self.train_data, max_depth, method, use_FEM)
 
-    def fractional_examples_method(self):
+    def set_class_counts_for_attr_val_for_attr_index(self):
 
-        FEM_train_data = [{"attrs_index": [], "attrs_vals": []}, [], []]
-        FEM_train_data[0]["attrs_index"] = copy.deepcopy(self.train_data[0]["attrs_index"])
-
-
-        class_counts_for_attr_val_for_attr_index = {}
+        self.class_counts_for_attr_val_for_attr_index = {}
         for attr_index in self.train_data[0]["attrs_index"]:
 
             attr_column = [row[attr_index] for row in self.train_data[0]["attrs_vals"]]
             class_counts_for_attr_val = {}
             for i, attr_val in enumerate(attr_column):
 
-                if attr_val == "missing":
-                    continue
+                # if attr_val == "missing":
+                #     continue
 
                 if attr_val in class_counts_for_attr_val.keys():
                     if self.train_data[1][i] in class_counts_for_attr_val[attr_val].keys():
@@ -60,45 +55,13 @@ class DecisionTree():
                     class_counts_for_attr_val[attr_val] = {}
                     class_counts_for_attr_val[attr_val][self.train_data[1][i]] = 1
 
-            class_counts_for_attr_val_for_attr_index[attr_index] = class_counts_for_attr_val
-
-
-        for i, row in enumerate(self.train_data[0]["attrs_vals"]):
-
-            if "missing" in row:
-                for attr_index in self.train_data[0]["attrs_index"]:
-                        
-                        if row[attr_index] == "missing":
-                            for attr_val in class_counts_for_attr_val_for_attr_index[attr_index].keys():
-
-                                row_copy = copy.deepcopy(row)
-                                row_copy[attr_index] = attr_val
-                                FEM_train_data[0]["attrs_vals"].append(row_copy)
-                                FEM_train_data[1].append(copy.deepcopy(self.train_data[1][i]))
-                                try:
-                                    freq = class_counts_for_attr_val_for_attr_index[attr_index][attr_val][self.train_data[1][i]]
-                                except:
-                                    freq = 0
-                                freq /= sum(class_counts_for_attr_val_for_attr_index[attr_index][attr_val].values())
-                                FEM_train_data[2].append(freq * copy.deepcopy(self.train_data[2][i]))
-
-                            break
-
-            else:
-
-                FEM_train_data[0]["attrs_vals"].append(copy.deepcopy(row))
-                FEM_train_data[1].append(copy.deepcopy(self.train_data[1][i]))
-                FEM_train_data[2].append(copy.deepcopy(self.train_data[2][i]))
-
-
-        FEM_train_data[0]["attrs_vals"] = tuple(FEM_train_data[0]["attrs_vals"])
-        FEM_train_data[1] = tuple(FEM_train_data[1])
-        FEM_train_data[2] = tuple(FEM_train_data[2])
-        FEM_train_data = tuple(FEM_train_data)
-
-        return FEM_train_data
-
+            self.class_counts_for_attr_val_for_attr_index[attr_index] = class_counts_for_attr_val
         
+        for attr_index in self.class_counts_for_attr_val_for_attr_index.keys():
+            for attr_val in self.class_counts_for_attr_val_for_attr_index[attr_index].keys():
+                for class_count in self.class_counts_for_attr_val_for_attr_index[attr_index][attr_val].keys():
+                    self.class_counts_for_attr_val_for_attr_index[attr_index][attr_val][class_count] /= \
+                        sum(self.class_counts_for_attr_val_for_attr_index[attr_index][attr_val].values())
 
     def calculate_entropy(self, class_vals, uniq_class_vals, weights):
         """
@@ -298,7 +261,20 @@ class DecisionTree():
         max_inf_gain_attr_index = None
         uniq_class_vals = np.unique(new_train_data[1])
         for attr_index in new_train_data[0]["attrs_index"]:
-            info_gain = self.inf_gain(attr_index, new_train_data, method)
+
+            new_train_data_filtered = [{"attrs_index": [], "attrs_vals": []}, [], []]
+            new_train_data_filtered[0]["attrs_index"] = copy.deepcopy(new_train_data[0]["attrs_index"])
+            for i, row in enumerate(new_train_data[0]["attrs_vals"]):
+                if row[attr_index] != "missing":
+                    new_train_data_filtered[0]["attrs_vals"].append(copy.deepcopy(row))
+                    new_train_data_filtered[1].append(copy.deepcopy(new_train_data[1][i]))
+                    new_train_data_filtered[2].append(copy.deepcopy(new_train_data[2][i]))
+            new_train_data_filtered[0]["attrs_vals"] = tuple(new_train_data_filtered[0]["attrs_vals"])
+            new_train_data_filtered[1] = tuple(new_train_data_filtered[1])
+            new_train_data_filtered[2] = tuple(new_train_data_filtered[2])
+            new_train_data_filtered = tuple(new_train_data_filtered)
+
+            info_gain = self.inf_gain(attr_index, new_train_data_filtered, method)
             if max_inf_gain < info_gain:
                 max_inf_gain = info_gain
                 max_inf_gain_attr_index = attr_index
@@ -306,7 +282,44 @@ class DecisionTree():
         majority_class = self.calculate_majority_class(new_train_data[1])
         tree = Node(max_inf_gain_attr_index, majority_class)
         for i, row in enumerate(new_train_data[0]["attrs_vals"]):
-            if row[max_inf_gain_attr_index] not in uniq_attr_vals:
+            if use_FEM and row[max_inf_gain_attr_index] == "missing":
+                for attr_val in self.class_counts_for_attr_val_for_attr_index[max_inf_gain_attr_index].keys():
+                    row_copy = copy.deepcopy(row)
+                    row_copy[max_inf_gain_attr_index] = attr_val
+                    if row_copy[max_inf_gain_attr_index] not in uniq_attr_vals:
+                        uniq_attr_vals[row_copy[max_inf_gain_attr_index]] = {}
+                        uniq_attr_vals[row_copy[max_inf_gain_attr_index]]["attrs_vals"] = [row_copy]
+                        uniq_attr_vals[row_copy[max_inf_gain_attr_index]]["class_vals"] = [new_train_data[1][i]]
+                        try:
+                            uniq_attr_vals[row_copy[max_inf_gain_attr_index]]["FEM_weight"] = [new_train_data[2][i]*self.class_counts_for_attr_val_for_attr_index[max_inf_gain_attr_index][attr_val][new_train_data[1][i]]] # try?
+                        except:
+                            uniq_attr_vals[row_copy[max_inf_gain_attr_index]]["FEM_weight"] = [0]
+                        uniq_attr_vals[row_copy[max_inf_gain_attr_index]]["class_vals_count"] = {}
+                        uniq_attr_vals[row_copy[max_inf_gain_attr_index]]["FEM_class_vals_count_weighted"] = {}
+                        for k in uniq_class_vals:
+                            uniq_attr_vals[row_copy[max_inf_gain_attr_index]]["class_vals_count"][k] = 0
+                            uniq_attr_vals[row_copy[max_inf_gain_attr_index]]["FEM_class_vals_count_weighted"][k] = 0
+                        uniq_attr_vals[row_copy[max_inf_gain_attr_index]]["count"] = 1
+                        uniq_attr_vals[row_copy[max_inf_gain_attr_index]]["class_vals_count"][new_train_data[1][i]] += 1
+                        try:
+                            uniq_attr_vals[row_copy[max_inf_gain_attr_index]]["FEM_class_vals_count_weighted"][new_train_data[1][i]] += new_train_data[2][i]*self.class_counts_for_attr_val_for_attr_index[max_inf_gain_attr_index][attr_val][new_train_data[1][i]]
+                        except:
+                            pass
+                        uniq_attr_vals[row_copy[max_inf_gain_attr_index]]["pure_class"] = False
+                    else:
+                        uniq_attr_vals[row_copy[max_inf_gain_attr_index]]["count"] += 1
+                        uniq_attr_vals[row_copy[max_inf_gain_attr_index]]["class_vals_count"][new_train_data[1][i]] += 1
+                        try:
+                            uniq_attr_vals[row_copy[max_inf_gain_attr_index]]["FEM_class_vals_count_weighted"][new_train_data[1][i]] += new_train_data[2][i]*self.class_counts_for_attr_val_for_attr_index[max_inf_gain_attr_index][attr_val][new_train_data[1][i]]
+                        except:
+                            pass
+                        uniq_attr_vals[row_copy[max_inf_gain_attr_index]]["attrs_vals"].append(row_copy)
+                        uniq_attr_vals[row_copy[max_inf_gain_attr_index]]["class_vals"].append(new_train_data[1][i])
+                        try:
+                            uniq_attr_vals[row_copy[max_inf_gain_attr_index]]["FEM_weight"].append(new_train_data[2][i]*self.class_counts_for_attr_val_for_attr_index[max_inf_gain_attr_index][attr_val][new_train_data[1][i]])
+                        except:
+                            uniq_attr_vals[row_copy[max_inf_gain_attr_index]]["FEM_weight"].append(0)
+            elif row[max_inf_gain_attr_index] not in uniq_attr_vals:
                 uniq_attr_vals[row[max_inf_gain_attr_index]] = {}
                 uniq_attr_vals[row[max_inf_gain_attr_index]]["attrs_vals"] = [row]
                 uniq_attr_vals[row[max_inf_gain_attr_index]]["class_vals"] = [new_train_data[1][i]]
@@ -318,7 +331,7 @@ class DecisionTree():
                     uniq_attr_vals[row[max_inf_gain_attr_index]]["FEM_class_vals_count_weighted"][k] = 0
                 uniq_attr_vals[row[max_inf_gain_attr_index]]["count"] = 1
                 uniq_attr_vals[row[max_inf_gain_attr_index]]["class_vals_count"][new_train_data[1][i]] += 1
-                uniq_attr_vals[row[max_inf_gain_attr_index]]["class_vals_count"][new_train_data[1][i]] += new_train_data[2][i]
+                uniq_attr_vals[row[max_inf_gain_attr_index]]["FEM_class_vals_count_weighted"][new_train_data[1][i]] += new_train_data[2][i]
                 uniq_attr_vals[row[max_inf_gain_attr_index]]["pure_class"] = False
             else:
                 uniq_attr_vals[row[max_inf_gain_attr_index]]["count"] += 1
@@ -329,12 +342,7 @@ class DecisionTree():
                 uniq_attr_vals[row[max_inf_gain_attr_index]]["FEM_weight"].append(new_train_data[2][i])
         if max_depth == 1 or len(new_train_data[0]["attrs_index"]) == 1:
             for attr_val in uniq_attr_vals:
-                the_best_class_val = None
-                class_val_count = -1
-                for class_val in uniq_attr_vals[attr_val]["class_vals_count"]:
-                    if uniq_attr_vals[attr_val]["class_vals_count"][class_val] >= class_val_count:
-                        the_best_class_val = class_val
-                        class_val_count = uniq_attr_vals[attr_val]["class_vals_count"][class_val]
+                the_best_class_val = max(uniq_attr_vals[attr_val]["FEM_class_vals_count_weighted"], key=uniq_attr_vals[attr_val]["FEM_class_vals_count_weighted"].get)
                 tree.add_branch(attr_val, Leaf(the_best_class_val))
         else:
             for attr_val in uniq_attr_vals.keys():
