@@ -25,9 +25,9 @@ class DecisionTree():
 
     def __init__(self, train_data, max_depth, default_prediction, method="entropy", FEM=True):
         self.train_data = copy.deepcopy(train_data)
+        self.default_prediction = default_prediction
         tree = self.genenerate_tree(train_data, max_depth, method, FEM)
         self.tree = tree
-        self.default_prediction = default_prediction
         self.attr_value_freq = self.calculate_attr_value_freq(train_data)
 
     def calculate_entropy(self, class_vals, uniq_class_vals, weights):
@@ -102,7 +102,11 @@ class DecisionTree():
         Returns:
             object: The majority class.
         """
-        return max(set(class_vals), key=class_vals.count)
+        try:
+            maj_class = max(set(class_vals), key=class_vals.count)
+        except:
+            maj_class = self.default_prediction
+        return maj_class
 
     def calculate_confusion_matrix(self, test_data, checked_class):
         """

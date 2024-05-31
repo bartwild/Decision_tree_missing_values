@@ -44,12 +44,11 @@ def skip_missing_inputs(data):
     """
     Skips individual input values within the dataset with missing value.
     """
-    old_data_attr, _ = zip(*data)
     new_data = []
-    for i in range(len(data)):
-        if 'missing' in old_data_attr:
+    for row in data:
+        if 'missing' in row[0]:
             continue
-        new_data.append(data[i])
+        new_data.append(row)
     return new_data
 
 def split_random_to_train_and_test_data(attrs_vals, class_vals, percent_of_train_data, masking_rate=0.1):
