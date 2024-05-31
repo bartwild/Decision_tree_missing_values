@@ -224,7 +224,7 @@ def visulate_f1_per_replacement_method(list_of_f1, labels):
     method4_f1 = list_of_f1[3::4]
 
     
-    bar_width = 0.25  # Adjust bar width for three methods
+    bar_width = 0.2  # Adjust bar width for three methods
     index = np.arange(len(labels))
     
     fig, ax = plt.subplots()
@@ -233,12 +233,12 @@ def visulate_f1_per_replacement_method(list_of_f1, labels):
     _ = ax.bar(index + 2 * bar_width, method3_f1, bar_width, label='przykładów ułamkowych')
     _ = ax.bar(index + 3 * bar_width, method4_f1, bar_width, label='pominięcie')
 
-    ax.set_xlabel('Percentage of Training Data')
+    ax.set_xlabel('Percentage of Missing Data')
     ax.set_ylabel('F1 score')
     ax.set_title('Comparison of Three Methods')
     ax.set_xticks(index + bar_width)
     ax.set_xticklabels(labels)
-    ax.legend()
+    ax.legend(0)
     
     plt.savefig("metody_test_f1.png")
     plt.show()
