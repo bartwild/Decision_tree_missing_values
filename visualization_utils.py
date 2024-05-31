@@ -186,7 +186,7 @@ def visulate_acc_per_replacement_method(list_of_acc, labels):
     method3_acc = list_of_acc[2::4]
     method4_acc = list_of_acc[3::4]
     
-    bar_width = 0.25  # Adjust bar width for three methods
+    bar_width = 0.2  # Adjust bar width for three methods
     index = np.arange(len(labels))
     
     fig, ax = plt.subplots()
@@ -200,7 +200,7 @@ def visulate_acc_per_replacement_method(list_of_acc, labels):
     ax.set_title('Comparison of Three Methods')
     ax.set_xticks(index + bar_width)
     ax.set_xticklabels(labels)
-    ax.legend()
+    ax.legend(loc='lower right')
     
     plt.savefig("metody_test.png")
     plt.show()
@@ -238,7 +238,7 @@ def visulate_f1_per_replacement_method(list_of_f1, labels):
     ax.set_title('Comparison of Three Methods')
     ax.set_xticks(index + bar_width)
     ax.set_xticklabels(labels)
-    ax.legend(0)
+    ax.legend(loc='lower right')
     
     plt.savefig("metody_test_f1.png")
     plt.show()

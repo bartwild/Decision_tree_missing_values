@@ -74,10 +74,11 @@ def split_random_to_train_and_test_data(attrs_vals, class_vals, percent_of_train
     return ({"attrs_index": list(range(len(attrs_vals[0]))), "attrs_vals": train_attrs_vals}, train_class_vals), \
            ({"attrs_index": list(range(len(attrs_vals[0]))), "attrs_vals": test_attrs_vals}, test_class_vals)
 
-def split_random_to_train_and_test_data_diff_methods(attrs_vals, class_vals, percent_of_train_data, masking_rate=0.1):
+def split_random_to_train_and_test_data_diff_methods(attrs_vals, class_vals, percent_of_train_data, masking_rate=10):
     """
     Splits the given dataset into training and testing data randomly after applying random attribute masking.
     """
+    masking_rate=masking_rate/100
     rand_seed = random.randint(-sys.maxsize-1, sys.maxsize)
     # skipped data 
     combined_data_skip = list(zip(attrs_vals, class_vals))

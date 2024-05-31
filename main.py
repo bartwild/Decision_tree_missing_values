@@ -131,7 +131,7 @@ visulate_acc_per_input_method(list_of_acc, labels_for_percent_of_train_data)
 ######
 # compare acc of diff methods
 ######
-list_of_percent_train_data = [50, 60, 70, 80]
+list_of_percent_train_data = [0, 5, 10, 15, 20, 30, 40, 50, 60, 70, 80]
 labels_for_percent_of_train_data = []
 list_of_acc = []
 list_of_f1 = []
@@ -143,7 +143,7 @@ for i in list_of_percent_train_data:
 
     print(i)
     train_data, test_data, train_data_mode, test_data_mode, train_data_distrib, test_data_distrib, skip_train, skip_test = \
-        split_random_to_train_and_test_data_diff_methods(row_attrs, class_vals, i, 0.5)
+        split_random_to_train_and_test_data_diff_methods(row_attrs, class_vals, 70, i)
 
     decision_tree = DecisionTree(train_data, MAX_DEPTH, default_prediction, method='gini', FEM=False)
     acc = decision_tree.calculate_acc(test_data)
