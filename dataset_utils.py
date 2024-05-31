@@ -40,13 +40,14 @@ def mask_random_attributes(attrs_vals, masking_rate):
         masked_attrs_vals.append(masked_values)
     return masked_attrs_vals
 
-def skip_random_inputs(data, masking_rate):
+def skip_missing_inputs(data):
     """
-    Randomly skips individual input values within the dataset.
+    Skips individual input values within the dataset with missing value.
     """
+    old_data_attr, _ = zip(*data)
     new_data = []
     for i in range(len(data)):
-        if random.random() < masking_rate:
+        if 'missing' in old_data_attr:
             continue
         new_data.append(data[i])
     return new_data
@@ -80,20 +81,20 @@ def split_random_to_train_and_test_data_diff_methods(attrs_vals, class_vals, per
     """
     masking_rate=masking_rate/100
     rand_seed = random.randint(-sys.maxsize-1, sys.maxsize)
+
+    attrs_vals = mask_random_attributes(attrs_vals, masking_rate)
+    attrs_vals_mode = copy.deepcopy(attrs_vals)
+    attrs_vals_distrib = copy.deepcopy(attrs_vals)
+    
     # skipped data 
     combined_data_skip = list(zip(attrs_vals, class_vals))
     random.seed(rand_seed)
     random.shuffle(combined_data_skip)
     split_index = int(len(combined_data_skip) * (percent_of_train_data / 100))
     train_data_skip = combined_data_skip[:split_index]
-    randomly_skipped_train_data = skip_random_inputs(train_data_skip, masking_rate)
-    train_attrs_vals_skip, train_class_vals_skip = zip(*randomly_skipped_train_data) if randomly_skipped_train_data else ([], [])
-
-
-    attrs_vals = mask_random_attributes(attrs_vals, masking_rate)
-    attrs_vals_mode = copy.deepcopy(attrs_vals)
-    attrs_vals_distrib = copy.deepcopy(attrs_vals)
-
+    skipped_train_data = skip_missing_inputs(train_data_skip)
+    train_attrs_vals_skip, train_class_vals_skip = zip(*skipped_train_data) if skipped_train_data else ([], [])
+    
     # masked data
     combined_data = list(zip(attrs_vals, class_vals))
     random.seed(rand_seed)

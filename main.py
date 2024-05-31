@@ -181,7 +181,7 @@ for i in list_of_percent_train_data:
     print(acc)
     print(f1)
 
-    labels_for_percent_of_train_data.append('%.2f%%' % (i))
+    labels_for_percent_of_train_data.append('%.0f%%' % (i))
 
 visualize_tree(tree=decision_tree.tree, attrs_names=ATTRS_NAMES,output_name="tree.png")
 visulate_acc_per_replacement_method(list_of_acc, labels_for_percent_of_train_data)
