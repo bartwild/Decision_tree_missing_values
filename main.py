@@ -1,6 +1,6 @@
 from dataset_utils import get_data, split_random_to_train_and_test_data, split_random_to_train_and_test_data_diff_methods
 from decision_tree import DecisionTree
-from visualization_utils import visualize_acc, visualize_metrics_of_confusion_matrix, visualize_class_counter, visualize_tree, visulate_acc_per_input_method, visulate_acc_per_replacement_method, visulate_f1_per_replacement_method
+from visualization_utils import visualize_acc, visualize_metrics_of_confusion_matrix, visualize_class_counter, visualize_tree, visulate_acc_per_input_method,visulate_f1_per_input_method, visulate_acc_per_replacement_method, visulate_f1_per_replacement_method, visulate_f1_and_acc
 from utils import ATTRS_NAMES, CLASS_VALUES, MAX_DEPTH, PERCENT_OF_TRAIN_DATA, ATTR_TO_INDEX
 import numpy as np
 import random
@@ -52,24 +52,6 @@ print(acc)
 #    visualize_tree(tree, ATTRS_NAMES, "tree-small.png")
 visualize_tree(random_forest.trees[0], ATTRS_NAMES, "tree-small.png")
 """
-#######
-# compare acc by percent of train data
-#######
-"""
-list_of_percent_train_data = [i*0.01 for i in range(5, 20, 5)] + [i*0.1 for i in range(2, 10, 4)] + [i for i in range(1, 5, 2)] + [i for i in range(5, 35, 5)] + [i for i in range(35, 85, 10)]
-labels_for_percent_of_train_data = []
-list_of_acc = []
-for i in list_of_percent_train_data:
-    print(i)
-    train_data, test_data = split_to_sorted_train_and_test_data(row_attrs, class_vals, i)
-    random_forest = RandomForest(train_data, N_TREES, MAX_DEPTH, percent_of_drawn_attrs=PERCENT_OF_DRAWN_ROWS, n_attrs=N_ATTRS)
-    acc = random_forest.calculate_acc(test_data)
-    list_of_acc.append(acc)
-    labels_for_percent_of_train_data.append('%.2f%%' % (i))
-    print(acc)
-
-visualize_acc(list_of_acc, labels_for_percent_of_train_data)
-"""
 ######
 # compare confusion matrix metrics by class val
 ######
@@ -90,17 +72,17 @@ visualize_metrics_of_confusion_matrix(list_of_metrics, CLASS_VALUES)
 ######
 # random forest
 """
-list_of_percent_train_data = [0.1, 0.5, 1, 5, 10]
+list_of_percent_train_data = [5, 10, 15, 20, 30, 40, 50, 60, 70, 80]
 labels_for_percent_of_train_data = []
 list_of_acc = []
 for i in list_of_percent_train_data:
     print(i)
     train_data, test_data = split_random_to_train_and_test_data(row_attrs, class_vals, i)
-    random_forest = RandomForest(train_data, N_TREES, MAX_DEPTH, percent_of_drawn_attrs=PERCENT_OF_DRAWN_ROWS, n_attrs=N_ATTRS, method='entropy')
+    random_forest = DecisionTree(train_data, MAX_DEPTH, "", method='entropy')
     acc = random_forest.calculate_acc(test_data)
     list_of_acc.append(acc)
     print(acc)
-    random_forest = RandomForest(train_data, N_TREES, MAX_DEPTH, percent_of_drawn_attrs=PERCENT_OF_DRAWN_ROWS, n_attrs=N_ATTRS, method='gini')
+    random_forest = DecisionTree(train_data, MAX_DEPTH,"", method='gini')
     acc = random_forest.calculate_acc(test_data)
     list_of_acc.append(acc)
     labels_for_percent_of_train_data.append('%.2f%%' % (i))
@@ -108,29 +90,34 @@ for i in list_of_percent_train_data:
 
 visulate_acc_per_input_method(list_of_acc, labels_for_percent_of_train_data)
 """
-# decision tree
 """
-list_of_percent_train_data = [0.1, 0.5, 1, 5, 10, 20, 30, 40, 50, 60, 70, 80]
+# decision tree
+list_of_percent_train_data = [0.1, 0.5, 1, 5, 10, 40, 60, 80]
 labels_for_percent_of_train_data = []
 list_of_acc = []
+list_of_f1 = []
 for i in list_of_percent_train_data:
     print(i)
-    train_data, test_data = split_random_to_train_and_test_data(row_attrs, class_vals, i)
-    decision_tree = DecisionTree(train_data, MAX_DEPTH, method='entropy', FEM=True)
+    train_data, test_data = split_random_to_train_and_test_data(row_attrs, class_vals, i, 0.0)
+    decision_tree = DecisionTree(train_data, MAX_DEPTH, '', method='entropy', FEM=True)
     acc = decision_tree.calculate_acc(test_data)
+    f1 = f1_score(test_data[1], [decision_tree.predict_decision_tree(row) for i, row in enumerate(test_data[0]["attrs_vals"])], average='weighted')
     list_of_acc.append(acc)
-    print(acc)
-    decision_tree = DecisionTree(train_data, MAX_DEPTH, method='gini', FEM=True)
+    list_of_f1.append(f1)
+    decision_tree = DecisionTree(train_data, MAX_DEPTH,'', method='gini', FEM=True)
     acc = decision_tree.calculate_acc(test_data)
+    f1 = f1_score(test_data[1], [decision_tree.predict_decision_tree(row) for i, row in enumerate(test_data[0]["attrs_vals"])], average='weighted')
     list_of_acc.append(acc)
-    labels_for_percent_of_train_data.append('%.2f%%' % (i))
-    print(acc)
-visualize_tree(tree=decision_tree.tree, attrs_names=ATTRS_NAMES,output_name="tree.png")
+    labels_for_percent_of_train_data.append('%.1f%%' % (i))
+    list_of_f1.append(f1)
+# visualize_tree(tree=decision_tree.tree, attrs_names=ATTRS_NAMES,output_name="tree.png")
 visulate_acc_per_input_method(list_of_acc, labels_for_percent_of_train_data)
+visulate_f1_per_input_method(list_of_f1, labels_for_percent_of_train_data)
 """
 ######
 # compare acc of diff methods
 ######
+"""
 list_of_percent_train_data = [0, 5, 10, 15, 20, 30, 40, 50, 60, 70, 80]
 labels_for_percent_of_train_data = []
 list_of_acc = []
@@ -186,3 +173,25 @@ for i in list_of_percent_train_data:
 visualize_tree(tree=decision_tree.tree, attrs_names=ATTRS_NAMES,output_name="tree.png")
 visulate_acc_per_replacement_method(list_of_acc, labels_for_percent_of_train_data)
 visulate_f1_per_replacement_method(list_of_f1, labels_for_percent_of_train_data)
+"""
+######
+# compare f1 and acc of diff missing data
+######
+list_of_percent_train_data = [0]#, 5, 10, 15, 20, 30, 40, 50, 60, 70, 80]
+labels_for_percent_of_train_data = []
+list_of_acc = []
+list_of_f1 = []
+unique_values, counts = np.unique(class_vals, return_counts=True)
+default_prediction = unique_values[np.argmax(counts)]
+for i in list_of_percent_train_data:
+    print(i)
+    _,_,_,_,_,_,train_data, test_data = split_random_to_train_and_test_data_diff_methods(row_attrs, class_vals, 80, i)
+    decision_tree = DecisionTree(train_data, MAX_DEPTH, default_prediction, method='entropy', FEM=True)
+    acc = decision_tree.calculate_acc(test_data)
+    f1 = f1_score(test_data[1], [decision_tree.predict_decision_tree(row) for i, row in enumerate(test_data[0]["attrs_vals"])], average='weighted')
+    print("f1 score: ", f1)
+    list_of_acc.append(acc)
+    labels_for_percent_of_train_data.append('%.0f%%' % (i))
+    list_of_f1.append(f1)
+visulate_f1_and_acc(list_of_acc, list_of_f1, labels_for_percent_of_train_data)
+visualize_tree(tree=decision_tree.tree, attrs_names=ATTRS_NAMES,output_name="tree.png")

@@ -162,11 +162,37 @@ def visulate_acc_per_input_method(list_of_acc, labels):
     _ = ax.bar(index + bar_width, method2_acc, bar_width, label='gini')
     ax.set_xlabel('Percentage of Training Data')
     ax.set_ylabel('Accuracy')
-    ax.set_title('Comparison of Two Input Methods')
+    ax.set_title('Comparison of Two Information Gain calculation methods')
     ax.set_xticks(index + bar_width / 2)
-    ax.set_xticklabels(labels, rotation=45)
+    ax.set_xticklabels(labels)
     ax.legend()
     plt.savefig("entropia_test.png")
+
+def visulate_f1_per_input_method(list_of_f1, labels):
+    """
+    Visualizes the f1 values using a bar graph for two input methods.
+
+    Parameters:
+    list_of_f1 (list): A list of f1 values.
+    x (list): A list of x-axis values.
+
+    Returns:
+    None
+    """
+    method1_f1 = list_of_f1[0::2]
+    method2_f1 = list_of_f1[1::2]
+    bar_width = 0.35
+    index = np.arange(len(labels))
+    fig, ax = plt.subplots()
+    _ = ax.bar(index, method1_f1, bar_width, label='entropy')
+    _ = ax.bar(index + bar_width, method2_f1, bar_width, label='gini')
+    ax.set_xlabel('Percentage of Training Data')
+    ax.set_ylabel('F1 score')
+    ax.set_title('Comparison of Two Information Gain calculation methods')
+    ax.set_xticks(index + bar_width / 2)
+    ax.set_xticklabels(labels)
+    ax.legend()
+    plt.savefig("entropia_test1.png")
 
 
 def visulate_acc_per_replacement_method(list_of_acc, labels):
@@ -218,27 +244,54 @@ def visulate_f1_per_replacement_method(list_of_f1, labels):
     None
     """
     # Split the f1 score values for the three methods
-    method1_f1 = list_of_f1[0::4]
-    method2_f1 = list_of_f1[1::4]
-    method3_f1 = list_of_f1[2::4]
-    method4_f1 = list_of_f1[3::4]
+    method1_f1 = list_of_f1[0::2]
+    #method2_f1 = list_of_f1[1::4]
+    #method3_f1 = list_of_f1[2::4]
+    method4_f1 = list_of_f1[1::2]
 
     
-    bar_width = 0.2  # Adjust bar width for three methods
+    bar_width = 0.35  # Adjust bar width for three methods
     index = np.arange(len(labels))
     
     fig, ax = plt.subplots()
     _ = ax.bar(index, method1_f1, bar_width, label='nowa wartość')
-    _ = ax.bar(index + bar_width, method2_f1, bar_width, label='dominanta')
-    _ = ax.bar(index + 2 * bar_width, method3_f1, bar_width, label='przykładów ułamkowych')
-    _ = ax.bar(index + 3 * bar_width, method4_f1, bar_width, label='pominięcie')
+    #_ = ax.bar(index + bar_width, method2_f1, bar_width, label='dominanta')
+    #_ = ax.bar(index + 2 * bar_width, method3_f1, bar_width, label='przykładów ułamkowych')
+    _ = ax.bar(index + 1 * bar_width, method4_f1, bar_width, label='pominięcie')
 
     ax.set_xlabel('Percentage of Missing Data')
     ax.set_ylabel('F1 score')
-    ax.set_title('Comparison of Three Methods')
+    ax.set_title('Comparison of Two Methods')
     ax.set_xticks(index + bar_width)
-    ax.set_xticklabels(labels, rotation=45)
-    ax.legend(loc='lower right')
+    ax.set_xticklabels(labels)
+    ax.legend(loc='upper right')
     
     plt.savefig("metody_test_f1.png")
     plt.show()
+
+def visulate_f1_and_acc(list_of_acc, list_of_f1, labels):
+    """
+    Visualizes the f1 values using a bar graph for two input methods.
+
+    Parameters:
+    list_of_f1 (list): A list of f1 values.
+    x (list): A list of x-axis values.
+
+    Returns:
+    None
+    """
+    method1_f1 = list_of_f1[0::1]
+    method1_acc = list_of_acc[0::1]
+    bar_width = 0.35
+    index = np.arange(len(labels))
+    fig, ax = plt.subplots()
+    _ = ax.bar(index, method1_acc, bar_width, label='acc')
+    _ = ax.bar(index+bar_width, method1_f1, bar_width, label='f1')
+    ax.set_xlabel('Percentage of Missing Training Data')
+    ax.set_ylabel('F1 score / Accuracy')
+    ax.set_title('Test of taking missing data as new data')
+    ax.set_xticks(index + bar_width / 2)
+    ax.set_xticklabels(labels)
+    ax.legend()
+    plt.savefig("new_data.png")
+
