@@ -227,58 +227,54 @@ class DecisionTree():
         Returns:
             Node: The root node of the generated decision tree.
         """
-        max_inf_gain = -1
-        max_inf_gain_attr_index = None
+        def calculate_filtered_weights():
+            return [len([x for x in attrs_vals if x != 'missing']) / len(attrs_vals) for attrs_vals in new_train_data[0]['attrs_vals']] if FEM else [1] * len(new_train_data[0]['attrs_vals'])
+
+        def find_best_attribute():
+            max_inf_gain = -1
+            max_inf_gain_attr_index = None
+            for attr_index in new_train_data[0]["attrs_index"]:
+                info_gain = self.inf_gain(attr_index, new_train_data, method, filtered_weights)
+                if info_gain > max_inf_gain:
+                    max_inf_gain = info_gain
+                    max_inf_gain_attr_index = attr_index
+            return max_inf_gain_attr_index
+
+        def split_data_on_attribute(attr_index):
+            uniq_attr_vals = {}
+            for i, row in enumerate(new_train_data[0]["attrs_vals"]):
+                attr_val = row[attr_index]
+                if attr_val not in uniq_attr_vals:
+                    uniq_attr_vals[attr_val] = {"attrs_vals": [], "class_vals": [], "class_vals_count": {k: 0 for k in uniq_class_vals}, "count": 0, "pure_class": False}
+                uniq_attr_vals[attr_val]["attrs_vals"].append(row)
+                uniq_attr_vals[attr_val]["class_vals"].append(new_train_data[1][i])
+                uniq_attr_vals[attr_val]["class_vals_count"][new_train_data[1][i]] += 1
+                uniq_attr_vals[attr_val]["count"] += 1
+            return uniq_attr_vals
+
+        def add_branches_or_leaves(tree, uniq_attr_vals, remaining_depth):
+            for attr_val, val_data in uniq_attr_vals.items():
+                if remaining_depth == 1 or len(new_train_data[0]["attrs_index"]) == 1:
+                    best_class_val = max(val_data["class_vals_count"], key=val_data["class_vals_count"].get)
+                    tree.add_branch(attr_val, Leaf(best_class_val))
+                else:
+                    if any(val_data["class_vals_count"][class_val] == val_data["count"] for class_val in val_data["class_vals_count"]):
+                        pure_class = next(class_val for class_val in val_data["class_vals_count"] if val_data["class_vals_count"][class_val] == val_data["count"])
+                        tree.add_branch(attr_val, Leaf(pure_class))
+                        val_data["pure_class"] = True
+                    if not val_data["pure_class"]:
+                        new_data = [{"attrs_index": [i for i in new_train_data[0]["attrs_index"] if i != max_inf_gain_attr_index], "attrs_vals": val_data["attrs_vals"]}, val_data["class_vals"]]
+                        node = self.genenerate_tree(tuple(new_data), remaining_depth - 1, method, FEM)
+                        tree.add_branch(attr_val, node)
+
         uniq_class_vals = np.unique(new_train_data[1])
-        if FEM:
-            filtered_weights = [len([x for x in attrs_vals if x != 'missing'])/len(attrs_vals) for attrs_vals in new_train_data[0]['attrs_vals']]
-        else:
-            filtered_weights = [1]*len(new_train_data[0]['attrs_vals'])
-        for attr_index in new_train_data[0]["attrs_index"]:
-            info_gain = self.inf_gain(attr_index, new_train_data, method, filtered_weights)
-            if max_inf_gain < info_gain:
-                max_inf_gain = info_gain
-                max_inf_gain_attr_index = attr_index
-        uniq_attr_vals = {}
+        filtered_weights = calculate_filtered_weights()
+        max_inf_gain_attr_index = find_best_attribute()
         majority_class = self.calculate_majority_class(new_train_data[1])
         tree = Node(max_inf_gain_attr_index, majority_class)
-        for i, row in enumerate(new_train_data[0]["attrs_vals"]):
-            if row[max_inf_gain_attr_index] not in uniq_attr_vals:
-                uniq_attr_vals[row[max_inf_gain_attr_index]] = {}
-                uniq_attr_vals[row[max_inf_gain_attr_index]]["attrs_vals"] = [row]
-                uniq_attr_vals[row[max_inf_gain_attr_index]]["class_vals"] = [new_train_data[1][i]]
-                uniq_attr_vals[row[max_inf_gain_attr_index]]["class_vals_count"] = {}
-                for k in uniq_class_vals:
-                    uniq_attr_vals[row[max_inf_gain_attr_index]]["class_vals_count"][k] = 0
-                uniq_attr_vals[row[max_inf_gain_attr_index]]["count"] = 1
-                uniq_attr_vals[row[max_inf_gain_attr_index]]["class_vals_count"][new_train_data[1][i]] += 1
-                uniq_attr_vals[row[max_inf_gain_attr_index]]["pure_class"] = False
-            else:
-                uniq_attr_vals[row[max_inf_gain_attr_index]]["count"] += 1
-                uniq_attr_vals[row[max_inf_gain_attr_index]]["class_vals_count"][new_train_data[1][i]] += 1
-                uniq_attr_vals[row[max_inf_gain_attr_index]]["attrs_vals"].append(row)
-                uniq_attr_vals[row[max_inf_gain_attr_index]]["class_vals"].append(new_train_data[1][i])
-        if max_depth == 1 or len(new_train_data[0]["attrs_index"]) == 1:
-            for attr_val in uniq_attr_vals:
-                the_best_class_val = None
-                class_val_count = -1
-                for class_val in uniq_attr_vals[attr_val]["class_vals_count"]:
-                    if uniq_attr_vals[attr_val]["class_vals_count"][class_val] >= class_val_count:
-                        the_best_class_val = class_val
-                tree.add_branch(attr_val, Leaf(the_best_class_val))
-        else:
-            for attr_val in uniq_attr_vals.keys():
-                new_data = [{"attrs_index": list(filter(lambda x: x != max_inf_gain_attr_index, new_train_data[0]["attrs_index"])), "attrs_vals": []}, []]
-                for class_val in uniq_attr_vals[attr_val]["class_vals_count"]:
-                    if uniq_attr_vals[attr_val]["class_vals_count"][class_val] == uniq_attr_vals[attr_val]["count"]:
-                        tree.add_branch(attr_val, Leaf(class_val))  # pure class
-                        uniq_attr_vals[attr_val]["pure_class"] = True
-                        break
-                if uniq_attr_vals[attr_val]["pure_class"] is False:
-                    new_data[0]["attrs_vals"] = uniq_attr_vals[attr_val]["attrs_vals"]
-                    new_data[1] = uniq_attr_vals[attr_val]["class_vals"]
-                    node = self.genenerate_tree(tuple(new_data), max_depth - 1, method, FEM)
-                    tree.add_branch(attr_val, node)
+        uniq_attr_vals = split_data_on_attribute(max_inf_gain_attr_index)
+        add_branches_or_leaves(tree, uniq_attr_vals, max_depth)
+
         return tree
     
     def calculate_attr_value_freq(self, train_data):
