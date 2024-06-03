@@ -174,10 +174,11 @@ visualize_tree(tree=decision_tree.tree, attrs_names=ATTRS_NAMES,output_name="tre
 visulate_acc_per_replacement_method(list_of_acc, labels_for_percent_of_train_data)
 visulate_f1_per_replacement_method(list_of_f1, labels_for_percent_of_train_data)
 """
+
 ######
 # compare f1 and acc of diff missing data
 ######
-list_of_percent_train_data = [0]#, 5, 10, 15, 20, 30, 40, 50, 60, 70, 80]
+list_of_percent_train_data = [0, 5, 10, 15, 20, 30, 40, 50, 60, 70, 80]
 labels_for_percent_of_train_data = []
 list_of_acc = []
 list_of_f1 = []
@@ -185,13 +186,15 @@ unique_values, counts = np.unique(class_vals, return_counts=True)
 default_prediction = unique_values[np.argmax(counts)]
 for i in list_of_percent_train_data:
     print(i)
-    _,_,_,_,_,_,train_data, test_data = split_random_to_train_and_test_data_diff_methods(row_attrs, class_vals, 80, i)
-    decision_tree = DecisionTree(train_data, MAX_DEPTH, default_prediction, method='entropy', FEM=True)
-    acc = decision_tree.calculate_acc(test_data)
+    train_data_2,_,_,_,_,_,train_data, test_data = split_random_to_train_and_test_data_diff_methods(row_attrs, class_vals, 80, i)
+    decision_tree = DecisionTree(train_data, MAX_DEPTH, default_prediction, method='entropy', FEM=False)
     f1 = f1_score(test_data[1], [decision_tree.predict_decision_tree(row) for i, row in enumerate(test_data[0]["attrs_vals"])], average='weighted')
     print("f1 score: ", f1)
-    list_of_acc.append(acc)
     labels_for_percent_of_train_data.append('%.0f%%' % (i))
     list_of_f1.append(f1)
+    decision_tree = DecisionTree(train_data_2, MAX_DEPTH, default_prediction, method='entropy', FEM=False)
+    f1 = f1_score(test_data[1], [decision_tree.predict_decision_tree(row) for i, row in enumerate(test_data[0]["attrs_vals"])], average='weighted')
+    print("f1 score: ", f1)
+    list_of_acc.append(f1)
 visulate_f1_and_acc(list_of_acc, list_of_f1, labels_for_percent_of_train_data)
 visualize_tree(tree=decision_tree.tree, attrs_names=ATTRS_NAMES,output_name="tree.png")
