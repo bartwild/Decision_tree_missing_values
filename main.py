@@ -186,8 +186,8 @@ unique_values, counts = np.unique(class_vals, return_counts=True)
 default_prediction = unique_values[np.argmax(counts)]
 for i in list_of_percent_train_data:
     print(i)
-    train_data_2,_,_,_,_,_,train_data, test_data = split_random_to_train_and_test_data_diff_methods(row_attrs, class_vals, 80, i)
-    decision_tree = DecisionTree(train_data, MAX_DEPTH, default_prediction, method='entropy', FEM=False)
+    train_data_2,_,_,_,_,_,_, test_data = split_random_to_train_and_test_data_diff_methods(row_attrs, class_vals, 80, i)
+    decision_tree = DecisionTree(train_data_2, MAX_DEPTH, default_prediction, method='entropy', FEM=True)
     f1 = f1_score(test_data[1], [decision_tree.predict_decision_tree(row) for i, row in enumerate(test_data[0]["attrs_vals"])], average='weighted')
     print("f1 score: ", f1)
     labels_for_percent_of_train_data.append('%.0f%%' % (i))

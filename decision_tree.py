@@ -1,9 +1,6 @@
 import numpy as np
 import math
-import random
 import copy
-
-from sympy import total_degree
 
 
 class DecisionTree():
@@ -24,9 +21,10 @@ class DecisionTree():
     train_data = None
 
     def __init__(self, train_data, max_depth, default_prediction, method="entropy", FEM=True):
+        self.FEM = FEM
         self.train_data = copy.deepcopy(train_data)
         self.default_prediction = default_prediction
-        tree = self.genenerate_tree(train_data, max_depth, method, FEM)
+        tree = self.genenerate_tree(train_data, max_depth, method)
         self.tree = tree
         self.attr_value_freq = self.calculate_attr_value_freq(train_data)
 
@@ -49,6 +47,25 @@ class DecisionTree():
                 prob_of_class = weighted_class_sum / total_weight
                 entropy -= prob_of_class * math.log(prob_of_class)
         return entropy
+
+    def calculate_attr_value_freq(self, train_data):
+        """
+        Calculate the frequency of each attribute value in the training data.
+
+        Args:
+            train_data (tuple): Training data consisting of attribute values and class labels.
+
+        Returns:
+            dict: A dictionary where keys are attribute indices and values are dictionaries
+                  mapping attribute values to their frequencies.
+        """
+        attr_value_freq = {i: {} for i in train_data[0]["attrs_index"]}
+        for row in train_data[0]["attrs_vals"]:
+            for attr_index, attr_val in enumerate(row):
+                if attr_val not in attr_value_freq[attr_index]:
+                    attr_value_freq[attr_index][attr_val] = 0
+                attr_value_freq[attr_index][attr_val] += 1
+        return attr_value_freq
 
     def calculate_gini_impurity(self, class_vals, uniq_class_vals, weights):
         """
@@ -104,7 +121,7 @@ class DecisionTree():
         """
         try:
             maj_class = max(set(class_vals), key=class_vals.count)
-        except:
+        except Exception:
             maj_class = self.default_prediction
         return maj_class
 
@@ -213,7 +230,7 @@ class DecisionTree():
             info += attr_vals_prob*entropy
         return total_entropy - info
 
-    def genenerate_tree(self, new_train_data, max_depth, method, FEM):
+    def genenerate_tree(self, new_train_data, max_depth, method):
         """
         Generates a decision tree based on the given training data.
 
@@ -223,12 +240,12 @@ class DecisionTree():
                 representing the attribute indices and attribute values for each training instance.
                 The second element is a list of class labels for each training instance.
             max_depth (int): The maximum depth of the decision tree.
-
+            method (str): Method to calculate impurity ("entropy" or "gini").
         Returns:
             Node: The root node of the generated decision tree.
         """
         def calculate_filtered_weights():
-            return [len([x for x in attrs_vals if x != 'missing']) / len(attrs_vals) for attrs_vals in new_train_data[0]['attrs_vals']] if FEM else [1] * len(new_train_data[0]['attrs_vals'])
+            return [len([x for x in attrs_vals if x != 'missing']) / len(attrs_vals) for attrs_vals in new_train_data[0]['attrs_vals']] if self.FEM else [1] * len(new_train_data[0]['attrs_vals'])
 
         def find_best_attribute():
             max_inf_gain = -1
@@ -264,7 +281,7 @@ class DecisionTree():
                         val_data["pure_class"] = True
                     if not val_data["pure_class"]:
                         new_data = [{"attrs_index": [i for i in new_train_data[0]["attrs_index"] if i != max_inf_gain_attr_index], "attrs_vals": val_data["attrs_vals"]}, val_data["class_vals"]]
-                        node = self.genenerate_tree(tuple(new_data), remaining_depth - 1, method, FEM)
+                        node = self.genenerate_tree(tuple(new_data), remaining_depth - 1, method)
                         tree.add_branch(attr_val, node)
 
         uniq_class_vals = np.unique(new_train_data[1])
@@ -276,28 +293,8 @@ class DecisionTree():
         add_branches_or_leaves(tree, uniq_attr_vals, max_depth)
 
         return tree
-    
-    def calculate_attr_value_freq(self, train_data):
-        """
-        Calculate the frequency of each attribute value in the training data.
 
-        Args:
-            train_data (tuple): Training data consisting of attribute values and class labels.
-
-        Returns:
-            dict: A dictionary where keys are attribute indices and values are dictionaries
-                  mapping attribute values to their frequencies.
-        """
-        attr_value_freq = {i: {} for i in train_data[0]["attrs_index"]}
-        for row in train_data[0]["attrs_vals"]:
-            for attr_index, attr_val in enumerate(row):
-                if attr_val not in attr_value_freq[attr_index]:
-                    attr_value_freq[attr_index][attr_val] = 0
-                attr_value_freq[attr_index][attr_val] += 1
-        return attr_value_freq
-
-
-    def predict_tree_decision(self, tree, input_data, voting):
+    def predict_tree_decision(self, tree, input_data):
         """
         Predicts the decision for a given input data using a decision tree.
 
@@ -312,16 +309,18 @@ class DecisionTree():
         while isinstance(node, Node):
             attr_index = node.attr_index
             input_attr_val = input_data[attr_index]
-            if input_attr_val == 'missing' and voting:
-                class_votes = {}
+            if input_attr_val == 'missing' and self.FEM is True:
+                weighted_votes = {}
                 total_weight = sum(self.attr_value_freq[attr_index].values())
                 for attr_val, freq in self.attr_value_freq[attr_index].items():
                     if attr_val in node.branches:
-                        predicted_class = self.predict_tree_decision(node.branches[attr_val], input_data, voting)
-                        if predicted_class not in class_votes:
-                            class_votes[predicted_class] = 0
-                        class_votes[predicted_class] += freq / total_weight
-                return max(class_votes, key=class_votes.get)
+                        decision = self.predict_tree_decision(node.branches[attr_val], input_data)
+                        if decision not in weighted_votes:
+                            weighted_votes[decision] = 0
+                        weighted_votes[decision] += freq / total_weight
+                if weighted_votes:
+                    return max(weighted_votes, key=weighted_votes.get)
+                return node.default_prediction
             if input_attr_val not in node.branches:
                 return node.default_prediction
             node = node.branches[input_attr_val]
@@ -329,7 +328,7 @@ class DecisionTree():
             return node.decision
         return node.default_prediction
 
-    def predict_decision_tree(self, input_data, voting=False):
+    def predict_decision_tree(self, input_data):
         """
         Predicts the output for the given input data using the Decision Tree model.
 
@@ -339,7 +338,7 @@ class DecisionTree():
         Returns:
         - The predicted output based on the Decision Tree model.
         """
-        return self.predict_tree_decision(self.tree, input_data, voting)
+        return self.predict_tree_decision(self.tree, input_data)
 
 
 class Node:

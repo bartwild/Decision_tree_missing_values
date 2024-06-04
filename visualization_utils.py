@@ -269,6 +269,7 @@ def visulate_f1_per_replacement_method(list_of_f1, labels):
     plt.savefig("metody_test_f1.png")
     plt.show()
 
+
 def visulate_f1_and_acc(list_of_acc, list_of_f1, labels):
     """
     Visualizes the f1 values using a bar graph for two input methods.
@@ -293,5 +294,5 @@ def visulate_f1_and_acc(list_of_acc, list_of_f1, labels):
     ax.set_xticks(index + bar_width / 2)
     ax.set_xticklabels(labels)
     ax.legend()
-    plt.savefig("new_data.png")
+    plt.savefig("new_data2.png")
 
