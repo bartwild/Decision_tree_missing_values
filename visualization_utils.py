@@ -6,31 +6,10 @@ import numpy as np
 
 
 def visualize_tree(tree, attrs_names, output_name):
-    """
-    Visualizes a decision tree.
-
-    Args:
-        tree (DecisionTree): The decision tree to visualize.
-        attrs_names (list): The names of the attributes in the tree.
-        output_name (str): The name of the output picture file.
-
-    Returns:
-        None
-    """
     print(attrs_names[tree.attr_index])
     main_node = Node(attrs_names[tree.attr_index], node_type="node")
 
     def create_children(tree, parrent_node):
-        """
-        Creates child nodes for a given tree and parent node.
-
-        Args:
-            tree (Tree): The tree object.
-            parrent_node (Node): The parent node object.
-
-        Returns:
-            None
-        """
         if isinstance(tree, Leaf):
             return
         for branch in tree.branches:
@@ -55,17 +34,6 @@ def visualize_tree(tree, attrs_names, output_name):
 
 
 def visualize_metrics_of_confusion_matrix(metrics, x_labels):
-    """
-    Visualizes the metrics of a confusion matrix.
-
-    Args:
-        metrics (list): A list of dictionaries containing the metrics for each class.
-            Each dictionary should have the following keys: "Ttr", "Ffr", "Ppv", "Acc", "F1".
-        x_labels (list): A list of labels for the x-axis.
-
-    Returns:
-        None
-    """
     ttr = []
     ffr = []
     ppv = []
@@ -92,15 +60,6 @@ def visualize_metrics_of_confusion_matrix(metrics, x_labels):
 
 
 def visualize_class_counter(class_counter, nr):
-    """
-    Visualizes the class counter data.
-
-    Args:
-        class_counter (dict): A dictionary containing the class counter data.
-
-    Returns:
-        None
-    """
     fig, axs = plt.subplots(2, 3)
     for attr, ax in zip(class_counter, axs.flat):
         x_label = []
@@ -126,16 +85,6 @@ def visualize_class_counter(class_counter, nr):
 
 
 def visualize_acc(list_of_acc, x):
-    """
-    Visualizes the accuracy values using a bar graph.
-
-    Parameters:
-    list_of_acc (list): A list of accuracy values.
-    x (list): A list of x-axis values.
-
-    Returns:
-    None
-    """
     plt.bar(x, list_of_acc)
     plt.ylabel("Acc")
     plt.xticks(rotation=45)
@@ -143,16 +92,6 @@ def visualize_acc(list_of_acc, x):
 
 
 def visulate_acc_per_input_method(list_of_acc, labels):
-    """
-    Visualizes the accuracy values using a bar graph for two input methods.
-
-    Parameters:
-    list_of_acc (list): A list of accuracy values.
-    x (list): A list of x-axis values.
-
-    Returns:
-    None
-    """
     method1_acc = list_of_acc[0::2]
     method2_acc = list_of_acc[1::2]
     bar_width = 0.35
@@ -169,16 +108,6 @@ def visulate_acc_per_input_method(list_of_acc, labels):
     plt.savefig("entropia_test.png")
 
 def visulate_f1_per_input_method(list_of_f1, labels):
-    """
-    Visualizes the f1 values using a bar graph for two input methods.
-
-    Parameters:
-    list_of_f1 (list): A list of f1 values.
-    x (list): A list of x-axis values.
-
-    Returns:
-    None
-    """
     method1_f1 = list_of_f1[0::2]
     method2_f1 = list_of_f1[1::2]
     bar_width = 0.35
@@ -196,23 +125,12 @@ def visulate_f1_per_input_method(list_of_f1, labels):
 
 
 def visulate_acc_per_replacement_method(list_of_acc, labels):
-    """
-    Visualizes the accuracy values using a bar graph for three replacement methods.
-
-    Parameters:
-    list_of_acc (list): A list of accuracy values.
-    labels (list): A list of x-axis values.
-
-    Returns:
-    None
-    """
-    # Split the accuracy values for the three methods
     method1_acc = list_of_acc[0::4]
     method2_acc = list_of_acc[1::4]
     method3_acc = list_of_acc[2::4]
     method4_acc = list_of_acc[3::4]
     
-    bar_width = 0.2  # Adjust bar width for three methods
+    bar_width = 0.2
     index = np.arange(len(labels))
     
     fig, ax = plt.subplots()
@@ -221,11 +139,11 @@ def visulate_acc_per_replacement_method(list_of_acc, labels):
     _ = ax.bar(index + 2 * bar_width, method3_acc, bar_width, label='przykładów ułamkowych')
     _ = ax.bar(index + 3 * bar_width, method4_acc, bar_width, label='pominięcie')
     
-    ax.set_xlabel('Percentage of Training Data')
-    ax.set_ylabel('Accuracy')
-    ax.set_title('Comparison of Three Methods')
+    ax.set_xlabel('Procent danych brakujących')
+    ax.set_ylabel('Dokładność')
+    ax.set_title('Porównanie czterech metod')
     ax.set_xticks(index + bar_width)
-    ax.set_xticklabels(labels, rotation=45)
+    ax.set_xticklabels(labels)
     ax.legend(loc='lower right')
     
     plt.savefig("metody_test.png")
@@ -233,35 +151,24 @@ def visulate_acc_per_replacement_method(list_of_acc, labels):
 
 
 def visulate_f1_per_replacement_method(list_of_f1, labels):
-    """
-    Visualizes the F1 score using a bar graph for three replacement methods.
-
-    Parameters:
-    list_of_f1 (list): A list of f1 score values.
-    labels (list): A list of x-axis values.
-
-    Returns:
-    None
-    """
-    # Split the f1 score values for the three methods
-    method1_f1 = list_of_f1[0::2]
-    #method2_f1 = list_of_f1[1::4]
-    #method3_f1 = list_of_f1[2::4]
-    method4_f1 = list_of_f1[1::2]
+    method1_f1 = list_of_f1[0::4]
+    method2_f1 = list_of_f1[1::4]
+    method3_f1 = list_of_f1[2::4]
+    method4_f1 = list_of_f1[3::4]
 
     
-    bar_width = 0.35  # Adjust bar width for three methods
+    bar_width = 0.2
     index = np.arange(len(labels))
     
     fig, ax = plt.subplots()
     _ = ax.bar(index, method1_f1, bar_width, label='nowa wartość')
-    #_ = ax.bar(index + bar_width, method2_f1, bar_width, label='dominanta')
-    #_ = ax.bar(index + 2 * bar_width, method3_f1, bar_width, label='przykładów ułamkowych')
-    _ = ax.bar(index + 1 * bar_width, method4_f1, bar_width, label='pominięcie')
+    _ = ax.bar(index + bar_width, method2_f1, bar_width, label='dominanta')
+    _ = ax.bar(index + 2 * bar_width, method3_f1, bar_width, label='przykładów ułamkowych')
+    _ = ax.bar(index + 3 * bar_width, method4_f1, bar_width, label='pominięcie')
 
-    ax.set_xlabel('Percentage of Missing Data')
-    ax.set_ylabel('F1 score')
-    ax.set_title('Comparison of Two Methods')
+    ax.set_xlabel('Procent danych brakujących')
+    ax.set_ylabel('Miara F1')
+    ax.set_title('Porównanie czterech metod')
     ax.set_xticks(index + bar_width)
     ax.set_xticklabels(labels)
     ax.legend(loc='upper right')
@@ -271,28 +178,18 @@ def visulate_f1_per_replacement_method(list_of_f1, labels):
 
 
 def visulate_f1_and_acc(list_of_acc, list_of_f1, labels):
-    """
-    Visualizes the f1 values using a bar graph for two input methods.
-
-    Parameters:
-    list_of_f1 (list): A list of f1 values.
-    x (list): A list of x-axis values.
-
-    Returns:
-    None
-    """
     method1_f1 = list_of_f1[0::1]
     method1_acc = list_of_acc[0::1]
     bar_width = 0.35
     index = np.arange(len(labels))
     fig, ax = plt.subplots()
     _ = ax.bar(index, method1_acc, bar_width, label='Model uznający brakujące dane za nowe')
-    _ = ax.bar(index+bar_width, method1_f1, bar_width, label='Model pomijający wiersze z brakującymi danymi')
+    _ = ax.bar(index+bar_width, method1_f1, bar_width, label='Model używających przykładów ułamkowych')
     ax.set_xlabel('Procent danych brakujących')
     ax.set_ylabel('Miara F1')
-    ax.set_title('Porównanie modelu uznającego brakujące dane za nowe i pomijającego je')
+    ax.set_title('Uznawanie brakujących dane za nowe i metoda przykładów ułamkowych')
     ax.set_xticks(index + bar_width / 2)
     ax.set_xticklabels(labels)
     ax.legend()
-    plt.savefig("new_data2.png")
+    plt.savefig("new_data1.png")
 

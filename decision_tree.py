@@ -4,23 +4,10 @@ import copy
 
 
 class DecisionTree():
-    """
-    Decision Tree classifier.
-
-    Parameters:
-    - train_data (tuple): Tuple containing the training data, where the first element is a dictionary with attribute indices and values, and the second element is a list of class labels.
-    - max_depth (int): Maximum depth of each decision tree.
-
-    Methods:
-    - calculate_acc(test_data): Calculates the accuracy of the Decision Tree on the given test data.
-    - calculate_confusion_matrix(test_data, checked_class): Calculates the confusion matrix for a specific class on the given test data.
-    - calculate_metrics_of_confusion_matrix(confusion_matrix): Calculates various metrics (True Positive Rate, False Positive Rate, Precision, Accuracy, F1 Score) based on the given confusion matrix.
-    - predict_random_forest(input_data): Predicts the class label for the given input data using the Decision Tree.
-    """
     tree = None
     train_data = None
 
-    def __init__(self, train_data, max_depth, default_prediction, method="entropy", FEM=True):
+    def __init__(self, train_data, max_depth, default_prediction, method="entropy", FEM=False):
         self.FEM = FEM
         self.train_data = copy.deepcopy(train_data)
         self.default_prediction = default_prediction
@@ -29,16 +16,6 @@ class DecisionTree():
         self.attr_value_freq = self.calculate_attr_value_freq(train_data)
 
     def calculate_entropy(self, class_vals, uniq_class_vals, weights):
-        """
-        Calculate the entropy of a given set of class values.
-
-        Parameters:
-            class_vals (list): A list of class values.
-            uniq_class_vals (list): A list of uniq class values.
-
-        Returns:
-            float: The entropy value.
-        """
         total_weight = sum(weights)
         entropy = 0
         for class_val in uniq_class_vals:
@@ -49,16 +26,6 @@ class DecisionTree():
         return entropy
 
     def calculate_attr_value_freq(self, train_data):
-        """
-        Calculate the frequency of each attribute value in the training data.
-
-        Args:
-            train_data (tuple): Training data consisting of attribute values and class labels.
-
-        Returns:
-            dict: A dictionary where keys are attribute indices and values are dictionaries
-                  mapping attribute values to their frequencies.
-        """
         attr_value_freq = {i: {} for i in train_data[0]["attrs_index"]}
         for row in train_data[0]["attrs_vals"]:
             for attr_index, attr_val in enumerate(row):
@@ -68,17 +35,6 @@ class DecisionTree():
         return attr_value_freq
 
     def calculate_gini_impurity(self, class_vals, uniq_class_vals, weights):
-        """
-        Calculate the weighted gini impurity of a given set of class values.
-
-        Parameters:
-            class_vals (list): A list of class values.
-            uniq_class_vals (list): A list of unique class values.
-            weights (list): A list of weights corresponding to each example.
-
-        Returns:
-            float: The weighted gini impurity value.
-        """
         total_weight = sum(weights)
         impurity = 1
         for class_val in uniq_class_vals:
@@ -89,16 +45,6 @@ class DecisionTree():
         return impurity
 
     def calculate_acc(self, test_data):
-        """
-        Calculate the accuracy of the Decision Tree model on the given test data.
-
-        Parameters:
-        - test_data (tuple): A tuple containing the test data, where the first element is a dictionary with the attribute values
-                             and the second element is a list of corresponding labels.
-
-        Returns:
-        - float: The accuracy of the Decision Tree model on the test data, expressed as a value between 0 and 1.
-        """
         correct_predictions = 0
         wrong_predictions = 0
         for i, row in enumerate(test_data[0]["attrs_vals"]):
@@ -110,15 +56,6 @@ class DecisionTree():
         return correct_predictions / (correct_predictions + wrong_predictions)
 
     def calculate_majority_class(self, class_vals):
-        """
-        Calculate the majority class in the given class values.
-
-        Parameters:
-            class_vals (list): A list of class values.
-
-        Returns:
-            object: The majority class.
-        """
         try:
             maj_class = max(set(class_vals), key=class_vals.count)
         except Exception:
@@ -126,22 +63,11 @@ class DecisionTree():
         return maj_class
 
     def calculate_confusion_matrix(self, test_data, checked_class):
-        """
-        Calculates the confusion matrix for a given test data and checked class.
-
-        Args:
-            test_data (list): The test data containing attribute values and corresponding class labels.
-            checked_class (str): The class label to be checked in the confusion matrix.
-
-        Returns:
-            dict: The confusion matrix containing the counts of true positives (tp), false positives (fp),
-                  false negatives (fn), and true negatives (tn).
-        """
         confusion_matrix = {
-            "tp": 0,  # detected and it's true
-            "fp": 0,  # detected but not true
-            "fn": 0,  # not detected but it's this class
-            "tn": 0  # not detected and it's not this class
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0
         }
         for i, row in enumerate(test_data[0]["attrs_vals"]):
             decision = self.predict_decision_tree(row)
@@ -158,17 +84,6 @@ class DecisionTree():
         return confusion_matrix
 
     def calculate_metrics_of_confusion_matrix(self, confusion_matrix):
-        """
-        Calculate various metrics based on a given confusion matrix.
-
-        Args:
-            confusion_matrix (dict): A dictionary containing the counts of true positives (tp), false negatives (fn),
-                                     false positives (fp), and true negatives (tn).
-
-        Returns:
-            dict: A dictionary containing the calculated metrics including True Positive Rate (Ttr), False Positive Rate (Ffr),
-                  Positive Predictive Value (Ppv), Accuracy (Acc), and F1 score (F1).
-        """
         ttr = None
         ffr = None
         ppv = None
@@ -195,16 +110,6 @@ class DecisionTree():
         return metrics
 
     def inf_gain(self, attr_index, new_train_data, method, filtered_weights):
-        """
-        Calculates the information gain for a given attribute index and new training data.
-
-        Parameters:
-            attr_index (int): The index of the attribute for which the information gain is calculated.
-            new_train_data (list): The new training data containing attribute values and class labels.
-
-        Returns:
-            float: The information gain value.
-        """
         number_of_rows = len(new_train_data[0]["attrs_vals"])
         attr_vals = [i[attr_index] for i in new_train_data[0]["attrs_vals"]]
         uniq_attr_vals = np.unique(attr_vals)
@@ -231,19 +136,6 @@ class DecisionTree():
         return total_entropy - info
 
     def genenerate_tree(self, new_train_data, max_depth, method):
-        """
-        Generates a decision tree based on the given training data.
-
-        Args:
-            new_train_data (tuple): A tuple containing the training data.
-                The first element is a dictionary with keys "attrs_index" and "attrs_vals",
-                representing the attribute indices and attribute values for each training instance.
-                The second element is a list of class labels for each training instance.
-            max_depth (int): The maximum depth of the decision tree.
-            method (str): Method to calculate impurity ("entropy" or "gini").
-        Returns:
-            Node: The root node of the generated decision tree.
-        """
         def calculate_filtered_weights():
             return [len([x for x in attrs_vals if x != 'missing']) / len(attrs_vals) for attrs_vals in new_train_data[0]['attrs_vals']] if self.FEM else [1] * len(new_train_data[0]['attrs_vals'])
 
@@ -295,16 +187,6 @@ class DecisionTree():
         return tree
 
     def predict_tree_decision(self, tree, input_data):
-        """
-        Predicts the decision for a given input data using a decision tree.
-
-        Parameters:
-        tree (Node): The decision tree to make predictions with.
-        input_data (list): The input data for which the decision is to be predicted.
-
-        Returns:
-        str or None: The predicted decision for the input data, or None if the decision cannot be determined.
-        """
         node = tree
         while isinstance(node, Node):
             attr_index = node.attr_index
@@ -329,26 +211,10 @@ class DecisionTree():
         return node.default_prediction
 
     def predict_decision_tree(self, input_data):
-        """
-        Predicts the output for the given input data using the Decision Tree model.
-
-        Parameters:
-        - input_data: The input data for which the output is to be predicted.
-
-        Returns:
-        - The predicted output based on the Decision Tree model.
-        """
         return self.predict_tree_decision(self.tree, input_data)
 
 
 class Node:
-    """
-    Represents a node in a decision tree.
-
-    Attributes:
-        attr_index (int): The index of the attribute associated with this node.
-        branches (dict): A dictionary mapping attribute values to child nodes.
-    """
     def __init__(self, attr_index, default_prediction):
         self.attr_index = attr_index
         self.branches = {}
@@ -360,11 +226,4 @@ class Node:
 
 class Leaf:
     def __init__(self, decision):
-        """
-        Initialize a Leaf object.
-        Args:
-            decision (str): The decision made by the leaf.
-        Returns:
-            None
-        """
         self.decision = decision
