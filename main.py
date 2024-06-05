@@ -4,7 +4,8 @@ from visualization_utils import visualize_acc, visualize_metrics_of_confusion_ma
 from utils import ATTRS_NAMES, CLASS_VALUES, MAX_DEPTH, PERCENT_OF_TRAIN_DATA, ATTR_TO_INDEX
 import numpy as np
 import random
-from sklearn.metrics import f1_score, confusion_matrix
+from sklearn.metrics import f1_score, confusion_matrix, accuracy_score
+from multiprocessing import Pool
 
 row_attrs, class_vals = get_data("nursery.data")
 """
@@ -191,51 +192,62 @@ visualize_tree(tree=decision_tree.tree, attrs_names=ATTRS_NAMES,output_name="tre
 ######
 
 list_of_percent_train_data = [0, 5, 10, 15, 20, 30, 40, 50, 60, 70, 80]
-labels_for_percent_of_train_data = []
-all_acc = []
-all_f1 = []
+
+def train_and_evaluate(i):
+    results = []
+    train_data, test_data, train_data_mode, test_data_mode, train_data_distrib, test_data_distrib, skip_train, skip_test = \
+        split_random_to_train_and_test_data_diff_methods(row_attrs, class_vals, PERCENT_OF_TRAIN_DATA, i)
+
+    decision_tree = DecisionTree(train_data, MAX_DEPTH, default_prediction, method='entropy', FEM=False)
+    acc = accuracy_score(test_data[1], [decision_tree.predict_decision_tree(row) for row in test_data[0]["attrs_vals"]])
+    f1 = f1_score(test_data[1], [decision_tree.predict_decision_tree(row) for row in test_data[0]["attrs_vals"]], average='weighted')
+    results.append((acc, f1))
+
+    decision_tree = DecisionTree(train_data_mode, MAX_DEPTH, default_prediction, method='entropy', FEM=False)
+    acc = accuracy_score(test_data_mode[1], [decision_tree.predict_decision_tree(row) for row in test_data[0]["attrs_vals"]])
+    f1 = f1_score(test_data_mode[1], [decision_tree.predict_decision_tree(row) for row in test_data_mode[0]["attrs_vals"]], average='weighted')
+    results.append((acc, f1))
+
+    decision_tree = DecisionTree(train_data, MAX_DEPTH, default_prediction, method='entropy', FEM=True)
+    acc = accuracy_score(test_data[1], [decision_tree.predict_decision_tree(row) for row in test_data[0]["attrs_vals"]])
+    f1 = f1_score(test_data[1], [decision_tree.predict_decision_tree(row) for row in test_data[0]["attrs_vals"]], average='weighted')
+    results.append((acc, f1))
+
+    decision_tree = DecisionTree(skip_train, MAX_DEPTH, default_prediction, method='entropy', FEM=False)
+    acc = accuracy_score(skip_test[1], [decision_tree.predict_decision_tree(row) for row in skip_test[0]["attrs_vals"]])
+    f1 = f1_score(skip_test[1], [decision_tree.predict_decision_tree(row) for row in skip_test[0]["attrs_vals"]], average='weighted')
+    results.append((acc, f1))
+
+    return results
+
+def parallel_execution(iteration):
+    all_acc = []
+    all_f1 = []
+
+    with Pool() as pool:
+        results = pool.map(train_and_evaluate, list_of_percent_train_data)
+
+    for result in results:
+        for acc, f1 in result:
+            all_acc.append(acc)
+            all_f1.append(f1)
+    
+    return all_acc, all_f1
 
 unique_values, counts = np.unique(class_vals, return_counts=True)
 default_prediction = unique_values[np.argmax(counts)]
 
-for iteration in range(5):
-    list_of_acc = []
-    list_of_f1 = []
-    
-    for i in list_of_percent_train_data:
-        print(i)
-        train_data, test_data, train_data_mode, test_data_mode, train_data_distrib, test_data_distrib, skip_train, skip_test = \
-            split_random_to_train_and_test_data_diff_methods(row_attrs, class_vals, PERCENT_OF_TRAIN_DATA, i)
+all_acc = []
+all_f1 = []
 
-        decision_tree = DecisionTree(train_data, MAX_DEPTH, default_prediction, method='entropy', FEM=False)
-        acc = decision_tree.calculate_acc(test_data)
-        f1 = f1_score(test_data[1], [decision_tree.predict_decision_tree(row) for row in test_data[0]["attrs_vals"]], average='weighted')
-        list_of_acc.append(acc)
-        list_of_f1.append(f1)
+for iteration in range(25):
+    print(f"Iteration {iteration}")
+    acc, f1 = parallel_execution(iteration)
+    all_acc.append(acc)
+    all_f1.append(f1)
 
-        decision_tree = DecisionTree(train_data_mode, MAX_DEPTH, default_prediction, method='entropy', FEM=False)
-        acc = decision_tree.calculate_acc(test_data_mode)
-        f1 = f1_score(test_data_mode[1], [decision_tree.predict_decision_tree(row) for row in test_data_mode[0]["attrs_vals"]], average='weighted')
-        list_of_acc.append(acc)
-        list_of_f1.append(f1)
-
-        decision_tree = DecisionTree(train_data, MAX_DEPTH, default_prediction, method='entropy', FEM=True)
-        acc = decision_tree.calculate_acc(test_data)
-        f1 = f1_score(test_data[1], [decision_tree.predict_decision_tree(row) for row in test_data[0]["attrs_vals"]], average='weighted')
-        list_of_acc.append(acc)
-        list_of_f1.append(f1)
-
-        decision_tree = DecisionTree(skip_train, MAX_DEPTH, default_prediction, method='entropy', FEM=False)
-        acc = decision_tree.calculate_acc(skip_test)
-        f1 = f1_score(skip_test[1], [decision_tree.predict_decision_tree(row) for row in skip_test[0]["attrs_vals"]], average='weighted')
-        list_of_acc.append(acc)
-        list_of_f1.append(f1)
-
-        if iteration == 0:
-            labels_for_percent_of_train_data.append('%.0f%%' % (i))
-
-    all_acc.append(list_of_acc)
-    all_f1.append(list_of_f1)
+    if iteration == 0:
+        labels_for_percent_of_train_data = ['%.0f%%' % (i) for i in list_of_percent_train_data]
 
 average_acc = np.mean(all_acc, axis=0)
 average_f1 = np.mean(all_f1, axis=0)
@@ -248,6 +260,5 @@ print("f1:")
 for i in range(len(list_of_percent_train_data)):
     print(f"{labels_for_percent_of_train_data[i]}: " + ", ".join(f"{average_f1[i*4+j]:.4f}%".replace('.', ',') for j in range(4)))
 
-visualize_tree(tree=decision_tree.tree, attrs_names=ATTRS_NAMES, output_name="tree.png")
 visulate_acc_per_replacement_method(average_acc, labels_for_percent_of_train_data)
 visulate_f1_per_replacement_method(average_f1, labels_for_percent_of_train_data)

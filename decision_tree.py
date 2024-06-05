@@ -44,17 +44,6 @@ class DecisionTree():
                 impurity -= (prob_of_class ** 2)
         return impurity
 
-    def calculate_acc(self, test_data):
-        correct_predictions = 0
-        wrong_predictions = 0
-        for i, row in enumerate(test_data[0]["attrs_vals"]):
-            decision = self.predict_decision_tree(row)
-            if decision == test_data[1][i]:
-                correct_predictions += 1
-            else:
-                wrong_predictions += 1
-        return correct_predictions / (correct_predictions + wrong_predictions)
-
     def calculate_majority_class(self, class_vals):
         try:
             maj_class = max(set(class_vals), key=class_vals.count)
