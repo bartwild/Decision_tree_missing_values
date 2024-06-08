@@ -1,6 +1,6 @@
 from dataset_utils import get_data, split_random_to_train_and_test_data, split_random_to_train_and_test_data_diff_methods
 from decision_tree import DecisionTree
-from visualization_utils import visualize_acc, visualize_metrics_of_confusion_matrix, visualize_class_counter, visualize_tree, visulate_acc_per_input_method,visulate_f1_per_input_method, visulate_acc_per_replacement_method, visulate_f1_per_replacement_method, visulate_f1_and_acc, visualize_confusion_matrix
+from visualization_utils import visualize_acc, visualize_metrics_of_confusion_matrix, visualize_class_counter, visualize_tree, visualize_acc_per_input_method,visualize_f1_per_input_method, visualize_acc_per_replacement_method, visualize_f1_per_replacement_method, visualize_f1_and_acc, visualize_confusion_matrix
 from utils import ATTRS_NAMES, CLASS_VALUES, MAX_DEPTH, PERCENT_OF_TRAIN_DATA, ATTR_TO_INDEX
 import numpy as np
 import random
@@ -86,7 +86,7 @@ for i in list_of_percent_train_data:
     list_of_acc.append(acc)
     labels_for_percent_of_train_data.append('%.2f%%' % (i))
 
-visulate_acc_per_input_method(list_of_acc, labels_for_percent_of_train_data)
+visualize_acc_per_input_method(list_of_acc, labels_for_percent_of_train_data)
 """
 """
 # decision tree
@@ -109,8 +109,8 @@ for i in list_of_percent_train_data:
     labels_for_percent_of_train_data.append('%.1f%%' % (i))
     list_of_f1.append(f1)
 # visualize_tree(tree=decision_tree.tree, attrs_names=ATTRS_NAMES,output_name="tree.png")
-visulate_acc_per_input_method(list_of_acc, labels_for_percent_of_train_data)
-visulate_f1_per_input_method(list_of_f1, labels_for_percent_of_train_data)
+visualize_acc_per_input_method(list_of_acc, labels_for_percent_of_train_data)
+visualize_f1_per_input_method(list_of_f1, labels_for_percent_of_train_data)
 """
 ######
 # compare acc and f1 of all methods
@@ -161,8 +161,8 @@ for i in list_of_percent_train_data:
     labels_for_percent_of_train_data.append('%.0f%%' % (i))
 
 visualize_tree(tree=decision_tree.tree, attrs_names=ATTRS_NAMES,output_name="tree.png")
-visulate_acc_per_replacement_method(list_of_acc, labels_for_percent_of_train_data)
-visulate_f1_per_replacement_method(list_of_f1, labels_for_percent_of_train_data)
+visualize_acc_per_replacement_method(list_of_acc, labels_for_percent_of_train_data)
+visualize_f1_per_replacement_method(list_of_f1, labels_for_percent_of_train_data)
 """
 ######
 # compare f1 and acc by missing data
@@ -184,7 +184,7 @@ for i in list_of_percent_train_data:
     decision_tree = DecisionTree(train_data_2, MAX_DEPTH, default_prediction, method='entropy', FEM=False)
     f1 = f1_score(test_data[1], [decision_tree.predict_decision_tree(row) for i, row in enumerate(test_data[0]["attrs_vals"])], average='weighted')
     list_of_acc.append(f1)
-visulate_f1_and_acc(list_of_acc, list_of_f1, labels_for_percent_of_train_data)
+visualize_f1_and_acc(list_of_acc, list_of_f1, labels_for_percent_of_train_data)
 visualize_tree(tree=decision_tree.tree, attrs_names=ATTRS_NAMES,output_name="tree.png")
 """
 ######
@@ -251,7 +251,7 @@ all_acc = []
 all_f1 = []
 all_cms = []
 
-for iteration in range(2):
+for iteration in range(25):
     print(f"Iteration {iteration+1}/25")
     acc, f1, cms = parallel_execution(iteration)
     all_acc.append(acc)
@@ -279,5 +279,5 @@ print("f1:")
 for i in range(len(list_of_percent_train_data)):
     print(f"{labels_for_percent_of_train_data[i]}: " + ", ".join(f"{average_f1[i*4+j]:.4f}%".replace('.', ',') for j in range(4)))
 
-visulate_acc_per_replacement_method(average_acc, labels_for_percent_of_train_data)
-visulate_f1_per_replacement_method(average_f1, labels_for_percent_of_train_data)
+visualize_acc_per_replacement_method(average_acc, labels_for_percent_of_train_data)
+visualize_f1_per_replacement_method(average_f1, labels_for_percent_of_train_data)

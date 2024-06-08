@@ -2,7 +2,7 @@ import h2o
 from h2o.estimators import H2ORandomForestEstimator
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, f1_score
-from visualization_utils import visulate_f1_and_acc
+from visualization_utils import visualize_f1_and_acc
 import pandas as pd
 from dataset_utils import split_random_to_train_and_test_data_diff_methods, get_data
 from decision_tree import DecisionTree
@@ -66,4 +66,4 @@ for i in list_of_percent_train_data:
     decision_tree = DecisionTree(train_data, MAX_DEPTH, default_prediction, method='entropy', FEM=False)
     f12 = f1_score(test_data[1], [decision_tree.predict_decision_tree(row) for i, row in enumerate(test_data[0]["attrs_vals"])], average='weighted')
     list_of_f1_2.append(f12)
-visulate_f1_and_acc(f1, list_of_f1_2, labels_for_percent_of_train_data)
+visualize_f1_and_acc(f1, list_of_f1_2, labels_for_percent_of_train_data)

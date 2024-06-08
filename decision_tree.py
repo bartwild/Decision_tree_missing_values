@@ -11,7 +11,7 @@ class DecisionTree():
         self.FEM = FEM
         self.train_data = copy.deepcopy(train_data)
         self.default_prediction = default_prediction
-        tree = self.genenerate_tree(train_data, max_depth, method)
+        tree = self.generate_tree(train_data, max_depth, method)
         self.tree = tree
         self.attr_value_freq = self.calculate_attr_value_freq(train_data)
 
@@ -124,7 +124,7 @@ class DecisionTree():
             info += attr_vals_prob*entropy
         return total_entropy - info
 
-    def genenerate_tree(self, new_train_data, max_depth, method):
+    def generate_tree(self, new_train_data, max_depth, method):
         def calculate_filtered_weights():
             return [len([x for x in attrs_vals if x != 'missing']) / len(attrs_vals) for attrs_vals in new_train_data[0]['attrs_vals']] if self.FEM else [1] * len(new_train_data[0]['attrs_vals'])
 
@@ -162,7 +162,7 @@ class DecisionTree():
                         val_data["pure_class"] = True
                     if not val_data["pure_class"]:
                         new_data = [{"attrs_index": [i for i in new_train_data[0]["attrs_index"] if i != max_inf_gain_attr_index], "attrs_vals": val_data["attrs_vals"]}, val_data["class_vals"]]
-                        node = self.genenerate_tree(tuple(new_data), remaining_depth - 1, method)
+                        node = self.generate_tree(tuple(new_data), remaining_depth - 1, method)
                         tree.add_branch(attr_val, node)
 
         uniq_class_vals = np.unique(new_train_data[1])

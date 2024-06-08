@@ -93,7 +93,7 @@ def visualize_acc(list_of_acc, x):
     plt.savefig("acc_graph.png")
 
 
-def visulate_acc_per_input_method(list_of_acc, labels):
+def visualize_acc_per_input_method(list_of_acc, labels):
     method1_acc = list_of_acc[0::2]
     method2_acc = list_of_acc[1::2]
     bar_width = 0.35
@@ -109,7 +109,7 @@ def visulate_acc_per_input_method(list_of_acc, labels):
     ax.legend()
     plt.savefig("entropia_test.png")
 
-def visulate_f1_per_input_method(list_of_f1, labels):
+def visualize_f1_per_input_method(list_of_f1, labels):
     method1_f1 = list_of_f1[0::2]
     method2_f1 = list_of_f1[1::2]
     bar_width = 0.35
@@ -126,7 +126,7 @@ def visulate_f1_per_input_method(list_of_f1, labels):
     plt.savefig("entropia_test1.png")
 
 
-def visulate_acc_per_replacement_method(list_of_acc, labels):
+def visualize_acc_per_replacement_method(list_of_acc, labels):
     method1_acc = list_of_acc[0::4]
     method2_acc = list_of_acc[1::4]
     method3_acc = list_of_acc[2::4]
@@ -152,7 +152,7 @@ def visulate_acc_per_replacement_method(list_of_acc, labels):
     plt.show()
 
 
-def visulate_f1_per_replacement_method(list_of_f1, labels):
+def visualize_f1_per_replacement_method(list_of_f1, labels):
     method1_f1 = list_of_f1[0::4]
     method2_f1 = list_of_f1[1::4]
     method3_f1 = list_of_f1[2::4]
@@ -179,7 +179,7 @@ def visulate_f1_per_replacement_method(list_of_f1, labels):
     plt.show()
 
 
-def visulate_f1_and_acc(list_of_acc, list_of_f1, labels):
+def visualize_f1_and_acc(list_of_acc, list_of_f1, labels):
     method1_f1 = list_of_f1[0::1]
     method1_acc = list_of_acc[0::1]
     bar_width = 0.35
