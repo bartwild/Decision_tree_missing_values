@@ -3,6 +3,8 @@ from anytree.exporter import UniqueDotExporter, DotExporter
 from decision_tree import Leaf
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
+from utils import CLASS_VALUES
 
 
 def visualize_tree(tree, attrs_names, output_name):
@@ -193,3 +195,9 @@ def visulate_f1_and_acc(list_of_acc, list_of_f1, labels):
     ax.legend()
     plt.savefig("new_data1.png")
 
+def visualize_confusion_matrix(cm, title):
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
+                cbar=False, xticklabels=CLASS_VALUES, yticklabels=CLASS_VALUES)
+    plt.title(title)
+    plt.savefig(f"cm_{title}.png")
+    plt.show()
