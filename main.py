@@ -1,3 +1,8 @@
+# ------------------------------------------
+# Author: Dawid Bartosiak, Filip Szyszko
+# Date: 2024-06-09
+# ------------------------------------------
+
 from dataset_utils import get_data, split_random_to_train_and_test_data, split_random_to_train_and_test_data_diff_methods
 from decision_tree import DecisionTree
 from visualization_utils import visualize_acc, visualize_metrics_of_confusion_matrix, visualize_class_counter, visualize_tree, visualize_acc_per_input_method,visualize_f1_per_input_method, visualize_acc_per_replacement_method, visualize_f1_per_replacement_method, visualize_f1_and_acc, visualize_confusion_matrix

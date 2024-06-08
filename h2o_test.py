@@ -1,3 +1,8 @@
+# ------------------------------------------
+# Author: Dawid Bartosiak, Filip Szyszko
+# Date: 2024-06-09
+# ------------------------------------------
+
 import h2o
 from h2o.estimators import H2ORandomForestEstimator
 from sklearn.model_selection import train_test_split

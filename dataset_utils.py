@@ -1,3 +1,8 @@
+# ------------------------------------------
+# Author: Dawid Bartosiak, Filip Szyszko
+# Date: 2024-06-09
+# ------------------------------------------
+
 import random
 from collections import Counter
 import copy

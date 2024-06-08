@@ -1,3 +1,8 @@
+# ------------------------------------------
+# Author: Dawid Bartosiak, Filip Szyszko
+# Date: 2024-06-09
+# ------------------------------------------
+
 from anytree import Node
 from anytree.exporter import UniqueDotExporter, DotExporter
 from decision_tree import Leaf
